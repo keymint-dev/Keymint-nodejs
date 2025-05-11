@@ -27,3 +27,6 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# Manual test files
+manual-test.js
