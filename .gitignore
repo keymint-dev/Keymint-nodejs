@@ -1,0 +1,29 @@
+# Node.js & TypeScript
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Log files
+*.log
+npm-debug.log*
+yarn-error.log
+yarn-debug.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor specific
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
