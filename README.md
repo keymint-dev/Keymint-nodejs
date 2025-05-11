@@ -21,6 +21,10 @@ npm install keymint-nodejs
 yarn add keymint-nodejs
 ```
 
+## Important Note on Examples and Tests
+
+**Please be aware that any access tokens, product IDs, license keys, or other specific identifiers visible in code examples, tests, or other parts of this repository are for illustrative and testing purposes only. They are not live credentials and have been invalidated or are placeholders. You must use your own valid credentials and identifiers from your KeyMint account when using this SDK.**
+
 ## Usage
 
 First, initialize the SDK with your access token:
