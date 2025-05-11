@@ -16,9 +16,9 @@ A TypeScript SDK for interacting with the KeyMint API, simplifying license key m
 ## Installation
 
 ```bash
-npm install keymint-nodejs-sdk
+npm install keymint-nodejs
 # or
-yarn add keymint-nodejs-sdk
+yarn add keymint-nodejs
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ yarn add keymint-nodejs-sdk
 First, initialize the SDK with your access token:
 
 ```typescript
-import { KeyMintSDK } from "keymint-nodejs-sdk";
+import { KeyMintSDK } from "keymint-nodejs";
 
 async function main() {
   const accessToken = process.env.KEYMINT_ACCESS_TOKEN;

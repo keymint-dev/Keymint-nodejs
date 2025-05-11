@@ -1,5 +1,5 @@
 {
-  "name": "keymint-nodejs-sdk",
+  "name": "keymint-nodejs",
   "version": "0.1.0",
   "description": "SDK for interacting with the KeyMint API",
   "main": "dist/index.js",
