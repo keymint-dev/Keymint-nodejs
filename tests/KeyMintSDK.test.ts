@@ -93,7 +93,7 @@ describe('KeyMintSDK', () => {
       } catch (error: any) {
         expect(error.message).toBe('Network connection failed');
         expect(error.code).toBe(-1); // Default code for generic errors
-        expect(error.status).toBeNull(); // Status is null for non-HTTP errors
+        expect(error.status).toBeUndefined(); // Status is undefined for non-HTTP errors
       }
     });
   });
@@ -152,7 +152,7 @@ describe('KeyMintSDK', () => {
       } catch (error: any) {
         expect(error.message).toBe('Connection timed out');
         expect(error.code).toBe(-1);
-        expect(error.status).toBeNull();
+        expect(error.status).toBeUndefined();
       }
     });
   });
@@ -207,7 +207,7 @@ describe('KeyMintSDK', () => {
       } catch (error: any) {
         expect(error.message).toBe('Server unreachable');
         expect(error.code).toBe(-1);
-        expect(error.status).toBeNull();
+        expect(error.status).toBeUndefined();
       }
     });
   });
@@ -281,7 +281,7 @@ describe('KeyMintSDK', () => {
       } catch (error: any) {
         expect(error.message).toBe('DNS resolution failed');
         expect(error.code).toBe(-1);
-        expect(error.status).toBeNull();
+        expect(error.status).toBeUndefined();
       }
     });
   });
@@ -335,7 +335,7 @@ describe('KeyMintSDK', () => {
       } catch (error: any) {
         expect(error.message).toBe('Request failed due to network issue');
         expect(error.code).toBe(-1);
-        expect(error.status).toBeNull();
+        expect(error.status).toBeUndefined();
       }
     });
   });
@@ -389,7 +389,7 @@ describe('KeyMintSDK', () => {
       } catch (error: any) {
         expect(error.message).toBe('API endpoint unreachable');
         expect(error.code).toBe(-1);
-        expect(error.status).toBeNull();
+        expect(error.status).toBeUndefined();
       }
     });
   });
