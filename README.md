@@ -265,7 +265,3 @@ Unblocks a previously blocked license key, allowing it to be activated again.
   - `licenseKey` (string, required): The license key to unblock.
 - Returns: A `Promise` that resolves to an [`UnblockKeyResponse`](#unblockkeyresponse) object with a `message` and `code` indicating success.
 - Throws: `KeyMintApiError` if unblocking fails (e.g., key not found, key not currently blocked).
-
----
-
-_This SDK is currently under development._
