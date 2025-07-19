@@ -15,24 +15,12 @@ describe('KeyMintSDK', () => {
   let sdk: KeyMintSDK;
 
   beforeEach(() => {
-    // Create a new SDK instance before each test
+    // Reset all mocks before each test
+    mockAxios.create.mockClear();
+    mockPost.mockClear();
+
+    // Create a new SDK instance for each test to ensure isolation
     sdk = new KeyMintSDK(accessToken);
-    // Reset the mock post function before each test to clear previous calls
-    mockPost.mockReset(); 
-    // Reset common headers on the mock Axios instance to ensure test isolation
-    const mockSdkInstance = (sdk as any).apiClient;
-    if (mockSdkInstance && mockSdkInstance.defaults && mockSdkInstance.defaults.headers) {
-      mockSdkInstance.defaults.headers.common = {};
-    }
-    // Re-apply the create logic to set the default headers for the current SDK instance
-    // This is a bit of a workaround because the instance is created before this reset.
-    // A cleaner way might involve resetting the mock create function too, but this is simpler for now.
-    if (mockAxios.create.mock.calls.length > 0) {
-        const lastCallConfig = mockAxios.create.mock.calls[mockAxios.create.mock.calls.length -1][0];
-        if(lastCallConfig && lastCallConfig.headers){
-             Object.assign(mockSdkInstance.defaults.headers.common, lastCallConfig.headers);
-        }
-    }
   });
 
   describe('createKey', () => {
@@ -49,6 +37,7 @@ describe('KeyMintSDK', () => {
       expect(mockPost).toHaveBeenCalledWith('/create-key', params);
       // Check if the apiClient instance (which mockAxios.create() returns) has the correct headers.
       // This is a bit indirect but necessary because headers are set on instance creation.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockAxiosInstance = (sdk as any).apiClient; // Access private member for test
       expect(mockAxiosInstance.defaults.headers.common['Authorization']).toBe(`Bearer ${accessToken}`);
       expect(mockAxiosInstance.defaults.headers.common['Content-Type']).toBe('application/json');
@@ -74,10 +63,11 @@ describe('KeyMintSDK', () => {
         await sdk.createKey(params);
         // If createKey doesn't throw, the test should fail
         fail('Expected createKey to throw KeyMintApiError'); 
-      } catch (error: any) {
-        expect(error.message).toBe(apiErrorResponse.message);
-        expect(error.code).toBe(apiErrorResponse.code);
-        expect(error.status).toBe(404);
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(404);
       }
     });
 
@@ -90,10 +80,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.createKey(params);
         fail('Expected createKey to throw a generic error');
-      } catch (error: any) {
-        expect(error.message).toBe('Network connection failed');
-        expect(error.code).toBe(-1); // Default code for generic errors
-        expect(error.status).toBeUndefined(); // Status is undefined for non-HTTP errors
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe('Network connection failed');
+        expect(thrownError.code).toBe(-1); // Default code for generic errors
+        expect(thrownError.status).toBeUndefined(); // Status is undefined for non-HTTP errors
       }
     });
   });
@@ -133,10 +124,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.activateKey(params);
         fail('Expected activateKey to throw KeyMintApiError');
-      } catch (error: any) {
-        expect(error.message).toBe(apiErrorResponse.message);
-        expect(error.code).toBe(apiErrorResponse.code);
-        expect(error.status).toBe(400);
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(400);
       }
     });
 
@@ -149,10 +141,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.activateKey(params);
         fail('Expected activateKey to throw a generic error');
-      } catch (error: any) {
-        expect(error.message).toBe('Connection timed out');
-        expect(error.code).toBe(-1);
-        expect(error.status).toBeUndefined();
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe('Connection timed out');
+        expect(thrownError.code).toBe(-1);
+        expect(thrownError.status).toBeUndefined();
       }
     });
   });
@@ -189,10 +182,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.deactivateKey(defaultParams);
         fail('Expected deactivateKey to throw KeyMintApiError');
-      } catch (error: any) {
-        expect(error.message).toBe(apiErrorResponse.message);
-        expect(error.code).toBe(apiErrorResponse.code);
-        expect(error.status).toBe(400);
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(400);
       }
     });
 
@@ -204,10 +198,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.deactivateKey(defaultParams);
         fail('Expected deactivateKey to throw a generic error');
-      } catch (error: any) {
-        expect(error.message).toBe('Server unreachable');
-        expect(error.code).toBe(-1);
-        expect(error.status).toBeUndefined();
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe('Server unreachable');
+        expect(thrownError.code).toBe(-1);
+        expect(thrownError.status).toBeUndefined();
       }
     });
   });
@@ -263,10 +258,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.getKey(defaultParams);
         fail('Expected getKey to throw KeyMintApiError');
-      } catch (error: any) {
-        expect(error.message).toBe(apiErrorResponse.message);
-        expect(error.code).toBe(apiErrorResponse.code);
-        expect(error.status).toBe(404);
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(404);
       }
     });
 
@@ -278,10 +274,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.getKey(defaultParams);
         fail('Expected getKey to throw a generic error');
-      } catch (error: any) {
-        expect(error.message).toBe('DNS resolution failed');
-        expect(error.code).toBe(-1);
-        expect(error.status).toBeUndefined();
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe('DNS resolution failed');
+        expect(thrownError.code).toBe(-1);
+        expect(thrownError.status).toBeUndefined();
       }
     });
   });
@@ -317,10 +314,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.blockKey(defaultParams);
         fail('Expected blockKey to throw KeyMintApiError');
-      } catch (error: any) {
-        expect(error.message).toBe(apiErrorResponse.message);
-        expect(error.code).toBe(apiErrorResponse.code);
-        expect(error.status).toBe(409);
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(409);
       }
     });
 
@@ -332,10 +330,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.blockKey(defaultParams);
         fail('Expected blockKey to throw a generic error');
-      } catch (error: any) {
-        expect(error.message).toBe('Request failed due to network issue');
-        expect(error.code).toBe(-1);
-        expect(error.status).toBeUndefined();
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe('Request failed due to network issue');
+        expect(thrownError.code).toBe(-1);
+        expect(thrownError.status).toBeUndefined();
       }
     });
   });
@@ -371,10 +370,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.unblockKey(defaultParams);
         fail('Expected unblockKey to throw KeyMintApiError');
-      } catch (error: any) {
-        expect(error.message).toBe(apiErrorResponse.message);
-        expect(error.code).toBe(apiErrorResponse.code);
-        expect(error.status).toBe(400);
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(400);
       }
     });
 
@@ -386,10 +386,11 @@ describe('KeyMintSDK', () => {
       try {
         await sdk.unblockKey(defaultParams);
         fail('Expected unblockKey to throw a generic error');
-      } catch (error: any) {
-        expect(error.message).toBe('API endpoint unreachable');
-        expect(error.code).toBe(-1);
-        expect(error.status).toBeUndefined();
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe('API endpoint unreachable');
+        expect(thrownError.code).toBe(-1);
+        expect(thrownError.status).toBeUndefined();
       }
     });
   });

@@ -13,11 +13,11 @@ export interface NewCustomer {
  * Parameters for the createKey API endpoint.
  */
 export interface CreateKeyParams {
-  productId: string;          // Required: Unique product identifier
-  maxActivations?: string;    // Optional: Maximum number of activations
-  expiryDate?: string;        // Optional: Expiration date in ISO 8601 format
-  customerId?: string;        // Optional: ID of an existing customer
-  newCustomer?: NewCustomer;  // Optional: Object to create a new customer
+  productId: string;          // Required: The unique identifier of the product.
+  maxActivations?: string;    // Optional: The maximum number of times the key can be activated.
+  expiryDate?: string;        // Optional: The expiration date of the key in ISO 8601 format.
+  customerId?: string;        // Optional: The ID of an existing customer to associate with the key.
+  newCustomer?: NewCustomer;  // Optional: An object to create and associate a new customer with the key.
 }
 
 /**
@@ -41,10 +41,10 @@ export interface KeyMintApiError {
  * Parameters for the activateKey API endpoint.
  */
 export interface ActivateKeyParams {
-  productId: string;  // Required: Unique product identifier
-  licenseKey: string; // Required: License key string
-  hostId?: string;     // Optional: Unique device identifier
-  deviceTag?: string;  // Optional: User-friendly device name
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to activate.
+  hostId?: string;     // Optional: A unique identifier for the device.
+  deviceTag?: string;  // Optional: A user-friendly name for the device.
 }
 
 /**
@@ -61,9 +61,9 @@ export interface ActivateKeyResponse {
  * Parameters for the deactivateKey API endpoint.
  */
 export interface DeactivateKeyParams {
-  productId: string;  // Required: Unique product identifier
-  licenseKey: string; // Required: License key string
-  hostId?: string;     // Optional: Unique device identifier. If omitted, all devices are deactivated.
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to deactivate.
+  hostId?: string;     // Optional: The unique identifier of the device to deactivate. If omitted, all devices are deactivated.
 }
 
 /**
@@ -74,7 +74,6 @@ export interface DeactivateKeyResponse {
   code: number;    // API response code (e.g., 0 for success)
 }
 
-// Added in Step 98
 /**
  * Device details included in the GetKeyResponse.
  */
@@ -113,8 +112,8 @@ export interface CustomerDetails {
  * Parameters for the getKey API endpoint.
  */
 export interface GetKeyParams {
-  productId: string;  // Required: Unique product identifier
-  licenseKey: string; // Required: License key string
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to retrieve.
 }
 
 /**
@@ -127,15 +126,13 @@ export interface GetKeyResponse {
     customer?: CustomerDetails; // Optional, customer data might not be present
   };
 }
-// End of Added in Step 98
 
-// Added in Step 114
 /**
  * Parameters for the blockKey API endpoint.
  */
 export interface BlockKeyParams {
-  productId: string;  // Required: Unique product identifier
-  licenseKey: string; // Required: License key string to block
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to block.
 }
 
 /**
@@ -145,15 +142,13 @@ export interface BlockKeyResponse {
   message: string; // Confirmation message (e.g., "Key blocked")
   code: number;    // API response code (e.g., 0 for success)
 }
-// End of Added in Step 114
 
-// Added in Step 124
 /**
  * Parameters for the unblockKey API endpoint.
  */
 export interface UnblockKeyParams {
-  productId: string;  // Required: Unique product identifier
-  licenseKey: string; // Required: License key string to unblock
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to unblock.
 }
 
 /**
@@ -163,4 +158,3 @@ export interface UnblockKeyResponse {
   message: string; // Confirmation message (e.g., "Key unblocked")
   code: number;    // API response code (e.g., 0 for success)
 }
-// End of Added in Step 124
