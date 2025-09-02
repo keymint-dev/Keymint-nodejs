@@ -7,7 +7,8 @@ import {
   BlockKeyParams, BlockKeyResponse, UnblockKeyParams, 
   UnblockKeyResponse, CreateCustomerParams, CreateCustomerResponse,
   GetAllCustomersResponse, GetCustomerWithKeysParams, GetCustomerWithKeysResponse,
-  UpdateCustomerParams, UpdateCustomerResponse
+  UpdateCustomerParams, UpdateCustomerResponse, DeleteCustomerParams, DeleteCustomerResponse,
+  ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse
 } from './types';
 
 // Export all types from types.ts to make them available to SDK users
@@ -53,6 +54,36 @@ export class KeyMintSDK {
   private async handleGetRequest<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     try {
       const response = await this.apiClient.get<T>(endpoint, { params });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError<KeyMintApiError>);
+    }
+  }
+
+  /**
+   * Generic method to handle DELETE requests.
+   * @param endpoint - API endpoint
+   * @param params - Query parameters
+   * @returns A promise that resolves with the API response
+   */
+  private async handleDeleteRequest<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+    try {
+      const response = await this.apiClient.delete<T>(endpoint, { params });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError<KeyMintApiError>);
+    }
+  }
+
+  /**
+   * Generic method to handle PUT requests.
+   * @param endpoint - API endpoint
+   * @param params - Request parameters
+   * @returns A promise that resolves with the API response
+   */
+  private async handlePutRequest<T>(endpoint: string, params: object): Promise<T> {
+    try {
+      const response = await this.apiClient.put<T>(endpoint, params);
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError<KeyMintApiError>);
@@ -139,7 +170,9 @@ export class KeyMintSDK {
    * @returns A promise that resolves with the customer and their license keys or rejects with an error.
    */
   async getCustomerWithKeys(params: GetCustomerWithKeysParams): Promise<GetCustomerWithKeysResponse> {
-    return this.handleGetRequest<GetCustomerWithKeysResponse>(`/customer/${params.customerId}/keys`);
+    return this.handleGetRequest<GetCustomerWithKeysResponse>('/customer/keys', {
+      customerId: params.customerId
+    });
   }
 
   /**
@@ -148,8 +181,40 @@ export class KeyMintSDK {
    * @returns A promise that resolves with the updated customer information or rejects with an error.
    */
   async updateCustomer(params: UpdateCustomerParams): Promise<UpdateCustomerResponse> {
-    const { customerId, ...updateData } = params;
-    return this.handleRequest<UpdateCustomerResponse>(`/customer/${customerId}`, updateData);
+    return this.handlePutRequest<UpdateCustomerResponse>('/customer/by-id', params);
+  }
+
+  /**
+   * Deletes a customer and all associated license keys permanently.
+   * @param params - Parameters for deleting the customer.
+   * @returns A promise that resolves with the deletion confirmation or rejects with an error.
+   */
+  async deleteCustomer(params: DeleteCustomerParams): Promise<DeleteCustomerResponse> {
+    return this.handleDeleteRequest<DeleteCustomerResponse>('/customer/by-id', {
+      customerId: params.customerId
+    });
+  }
+
+  /**
+   * Toggles the status of a customer (active/inactive).
+   * @param params - Parameters for toggling the customer status.
+   * @returns A promise that resolves with the updated customer status or rejects with an error.
+   */
+  async toggleCustomerStatus(params: ToggleCustomerStatusParams): Promise<ToggleCustomerStatusResponse> {
+    return this.handleRequest<ToggleCustomerStatusResponse>('/customer/disable', {
+      customerId: params.customerId
+    });
+  }
+
+  /**
+   * Retrieves detailed information about a specific customer by ID.
+   * @param params - Parameters for fetching the customer details.
+   * @returns A promise that resolves with the customer details or rejects with an error.
+   */
+  async getCustomerById(params: GetCustomerByIdParams): Promise<GetCustomerByIdResponse> {
+    return this.handleGetRequest<GetCustomerByIdResponse>(`/customer/by-id`, {
+      customerId: params.customerId
+    });
   }
 
   private handleError(axiosError: AxiosError<KeyMintApiError>): KeyMintApiError {

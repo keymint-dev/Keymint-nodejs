@@ -256,3 +256,54 @@ export interface UpdateCustomerResponse {
   data: Customer;
   code: number;
 }
+
+/**
+ * Parameters for the toggleCustomerStatus API endpoint.
+ */
+export interface ToggleCustomerStatusParams {
+  customerId: string;  // Required: The customer ID
+}
+
+/**
+ * Response structure for a successful toggleCustomerStatus API call.
+ */
+export interface ToggleCustomerStatusResponse {
+  action: string;      // Action performed (e.g., "toggleActive")
+  status: boolean;     // Success status
+  message: string;     // Status message (e.g., "Customer disabled")
+  code: number;        // API response code
+}
+
+/**
+ * Parameters for the getCustomerById API endpoint.
+ */
+export interface GetCustomerByIdParams {
+  customerId: string;  // Required: The customer ID
+}
+
+/**
+ * Response structure for a successful getCustomerById API call.
+ */
+export interface GetCustomerByIdResponse {
+  action: string;      // Action performed (e.g., "getCustomerById")
+  status: boolean;     // Success status
+  data: Customer[];    // Array containing the customer object
+  code: number;        // API response code
+}
+
+/**
+ * Parameters for the deleteCustomer API endpoint.
+ */
+export interface DeleteCustomerParams {
+  customerId: string;  // Required: The customer ID
+}
+
+/**
+ * Response structure for a successful deleteCustomer API call.
+ */
+export interface DeleteCustomerResponse {
+  action: string;      // Action performed (e.g., "deleteCustomer")
+  status: boolean;     // Success status
+  message: string;     // Status message (e.g., "Customer deleted")
+  code: number;        // API response code
+}

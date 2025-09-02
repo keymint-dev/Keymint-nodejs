@@ -100,8 +100,12 @@ All methods are asynchronous and return a `Promise`.
 | --------------------- | ------------------------------------------------- |
 | `createCustomer`      | Creates a new customer.                           |
 | `getAllCustomers`     | Retrieves all customers.                          |
+| `getCustomerById`     | Gets a specific customer by ID.                   |
 | `getCustomerWithKeys` | Gets a customer along with their license keys.   |
 | `updateCustomer`      | Updates an existing customer's information.       |
+| `toggleCustomerStatus`| Toggles a customer's active status.              |
+| `deleteCustomer`      | Permanently deletes a customer and their keys.   |
+| `deleteCustomer`      | Permanently deletes a customer and all associated license keys. |
 
 For more detailed information about the API methods and their parameters, please refer to the [API Reference](#api-reference) section below.
 
@@ -139,6 +143,11 @@ const customer = await sdk.createCustomer({
 // Get all customers
 const customers = await sdk.getAllCustomers();
 
+// Get a specific customer by ID
+const customerById = await sdk.getCustomerById({
+  customerId: 'customer_123'
+});
+
 // Get customer with their license keys
 const customerWithKeys = await sdk.getCustomerWithKeys({
   customerId: customer.data.id
@@ -148,7 +157,17 @@ const customerWithKeys = await sdk.getCustomerWithKeys({
 const updatedCustomer = await sdk.updateCustomer({
   customerId: customer.data.id,
   name: 'John Smith',
-  active: true
+  email: 'john.smith@example.com'
+});
+
+// Toggle customer status (enable/disable)
+const toggleResponse = await sdk.toggleCustomerStatus({
+  customerId: customer.data.id
+});
+
+// Delete customer permanently (irreversible!)
+const deleteResponse = await sdk.deleteCustomer({
+  customerId: customer.data.id
 });
 ```
 
@@ -187,26 +206,6 @@ const licenseResponse = await sdk.createKey({
    ```
 
 ⚠️ **Important**: Never commit `.env` files to version control. The `.gitignore` file already excludes them.
-
-## 🧪 Testing
-
-### Unit Tests
-```bash
-npm test
-```
-
-### Real Environment Testing
-```bash
-# Set your credentials
-export KEYMINT_ACCESS_TOKEN="your_token_here"
-export KEYMINT_PRODUCT_ID="your_product_id_here"
-
-# Run real environment tests
-npm run test:real
-
-# Or run manual tests
-npm start
-```
 
 ## 📚 API Reference
 
@@ -278,6 +277,12 @@ npm start
 
 No parameters required. Returns a list of all customers.
 
+#### `getCustomerById(params)`
+
+| Parameter    | Type     | Description                              |
+| ------------ | -------- | ---------------------------------------- |
+| `customerId` | `string` | **Required.** The ID of the customer.   |
+
 #### `getCustomerWithKeys(params)`
 
 | Parameter    | Type     | Description                              |
@@ -293,6 +298,20 @@ No parameters required. Returns a list of all customers.
 | `email`      | `string`  | *Optional.* Updated customer email.                   |
 | `active`     | `boolean` | *Optional.* Whether the customer is active.          |
 
+#### `toggleCustomerStatus(params)`
+
+| Parameter    | Type      | Description                                           |
+| ------------ | --------- | ----------------------------------------------------- |
+| `customerId` | `string`  | **Required.** The ID of the customer to toggle.      |
+
+#### `deleteCustomer(params)`
+
+| Parameter    | Type      | Description                                           |
+| ------------ | --------- | ----------------------------------------------------- |
+| `customerId` | `string`  | **Required.** The ID of the customer to delete permanently. |
+
+⚠️ **Warning**: `deleteCustomer` permanently deletes the customer and all associated license keys. This action cannot be undone.
+
 ## 📜 License
 
 This SDK is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
@@ -300,7 +319,7 @@ This SDK is licensed under the MIT License. See the [LICENSE](LICENSE) file for 
 This SDK has been updated to match the latest KeyMint API changes:
 
 **New Features:**
-- ✅ Added customer management methods (`createCustomer`, `getAllCustomers`, `getCustomerWithKeys`, `updateCustomer`)
+- ✅ Added customer management methods (`createCustomer`, `getAllCustomers`, `getCustomerWithKeys`, `updateCustomer`, `deleteCustomer`)
 - ✅ Updated API endpoints to match new API structure
 - ✅ Enhanced type safety with updated TypeScript interfaces
 - ✅ `maxActivations` is now optional when creating license keys

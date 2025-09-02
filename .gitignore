@@ -27,8 +27,3 @@ Thumbs.db
 # IDE & Editor specific
 .vscode/
 .idea/
-
-# Test coverage
-coverage/
-
-# Manual test files
