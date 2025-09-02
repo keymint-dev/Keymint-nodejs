@@ -1,5 +1,5 @@
 import { KeyMintSDK } from '../src/index'; // Adjust path if your src is structured differently
-import mockAxios, { mockPost } from './__mocks__/axios'; // Our mock post function and axios mock from the __mocks__ directory
+import mockAxios, { mockPost, mockGet } from './__mocks__/axios'; // Our mock post function and axios mock from the __mocks__ directory
 import { 
   KeyMintApiError,
   CreateKeyParams, CreateKeyResponse,
@@ -7,7 +7,9 @@ import {
   DeactivateKeyParams, DeactivateKeyResponse,
   GetKeyParams, GetKeyResponse,
   BlockKeyParams, BlockKeyResponse,
-  UnblockKeyParams, UnblockKeyResponse
+  UnblockKeyParams, UnblockKeyResponse,
+  CreateCustomerParams, CreateCustomerResponse,
+  GetAllCustomersResponse
 } from '../src/types';
 
 describe('KeyMintSDK', () => {
@@ -18,14 +20,15 @@ describe('KeyMintSDK', () => {
     // Reset all mocks before each test
     mockAxios.create.mockClear();
     mockPost.mockClear();
+    mockGet.mockClear();
 
     // Create a new SDK instance for each test to ensure isolation
     sdk = new KeyMintSDK(accessToken);
   });
 
   describe('createKey', () => {
-    it('should call /create-key with correct params and headers, and return key data on success', async () => {
-      const params: CreateKeyParams = { productId: 'prod_123' };
+    it('should call /key with correct params and headers, and return key data on success', async () => {
+      const params: CreateKeyParams = { productId: 'prod_123', maxActivations: '5' };
       const expectedResponse: CreateKeyResponse = { code: 0, key: 'lk_test_key_12345' };
       
       // Configure the mock to resolve with our expected response
@@ -34,7 +37,7 @@ describe('KeyMintSDK', () => {
       const result = await sdk.createKey(params);
 
       // Check if axios.post was called correctly
-      expect(mockPost).toHaveBeenCalledWith('/create-key', params);
+      expect(mockPost).toHaveBeenCalledWith('/key', params);
       // Check if the apiClient instance (which mockAxios.create() returns) has the correct headers.
       // This is a bit indirect but necessary because headers are set on instance creation.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,8 +49,20 @@ describe('KeyMintSDK', () => {
       expect(result).toEqual(expectedResponse);
     });
 
+    it('should work without maxActivations parameter', async () => {
+      const params: CreateKeyParams = { productId: 'prod_123' };
+      const expectedResponse: CreateKeyResponse = { code: 0, key: 'lk_test_key_12345' };
+      
+      mockPost.mockResolvedValueOnce({ data: expectedResponse });
+
+      const result = await sdk.createKey(params);
+
+      expect(mockPost).toHaveBeenCalledWith('/key', params);
+      expect(result).toEqual(expectedResponse);
+    });
+
     it('should throw a KeyMintApiError when API returns an error', async () => {
-      const params: CreateKeyParams = { productId: 'prod_invalid' };
+      const params: CreateKeyParams = { productId: 'prod_invalid', maxActivations: '5' };
       const apiErrorResponse: KeyMintApiError = { message: 'Product not found', code: 4041 };
       
       // Configure the mock to reject with an Axios-like error structure
@@ -72,7 +87,7 @@ describe('KeyMintSDK', () => {
     });
 
     it('should throw a generic error for non-API errors', async () => {
-      const params: CreateKeyParams = { productId: 'prod_network_failure' };
+      const params: CreateKeyParams = { productId: 'prod_network_failure', maxActivations: '5' };
       const networkError = new Error('Network connection failed');
       
       mockPost.mockRejectedValueOnce(networkError); // Simulate a network error (not an Axios error with a response)
@@ -95,20 +110,20 @@ describe('KeyMintSDK', () => {
       licenseKey: 'lk_valid_key' 
     };
 
-    it('should call /activate-key with correct params and return success response', async () => {
+    it('should call /key/activate with correct params and return success response', async () => {
       const params: ActivateKeyParams = { ...defaultParams, hostId: 'device_123' };
       const expectedResponse: ActivateKeyResponse = { 
         code: 0, 
         message: 'License valid', 
-        licensee_name: 'Test User', 
-        licensee_email: 'test@example.com' 
+        licenseeName: 'Test User', 
+        licenseeEmail: 'test@example.com' 
       };
       
       mockPost.mockResolvedValueOnce({ data: expectedResponse });
 
       const result = await sdk.activateKey(params);
 
-      expect(mockPost).toHaveBeenCalledWith('/activate-key', params);
+      expect(mockPost).toHaveBeenCalledWith('/key/activate', params);
       expect(result).toEqual(expectedResponse);
     });
 
@@ -157,7 +172,7 @@ describe('KeyMintSDK', () => {
       hostId: 'device_to_deactivate_456'
     };
 
-    it('should call /deactivate-key with correct params and return success response', async () => {
+    it('should call /key/deactivate with correct params and return success response', async () => {
       const expectedResponse: DeactivateKeyResponse = { 
         code: 0, 
         message: 'Host deactivated successfully' 
@@ -167,7 +182,7 @@ describe('KeyMintSDK', () => {
 
       const result = await sdk.deactivateKey(defaultParams);
 
-      expect(mockPost).toHaveBeenCalledWith('/deactivate-key', defaultParams);
+      expect(mockPost).toHaveBeenCalledWith('/key/deactivate', defaultParams);
       expect(result).toEqual(expectedResponse);
     });
 
@@ -213,22 +228,22 @@ describe('KeyMintSDK', () => {
       licenseKey: 'lk_detail_test_key'
     };
 
-    it('should call /get-key with correct params and return key details', async () => {
+    it('should call /key with GET method and correct params and return key details', async () => {
       const expectedResponse: GetKeyResponse = { 
         code: 0,
         data: {
           license: {
             id: 'license_uuid_123',
             key: 'lk_detail_test_key',
-            product_id: 'prod_789',
-            max_activations: 5,
+            productId: 'prod_789',
+            maxActivations: 5,
             activations: 1, // Current number of active devices
             devices: [
-              { host_id: 'device_A', activation_time: '2023-01-02T00:00:00Z', ip_address: '192.168.1.10', device_tag: 'Main Computer' },
-              { host_id: 'device_B', activation_time: '2023-01-03T00:00:00Z', ip_address: '192.168.1.11', device_tag: 'Laptop' }
+              { hostId: 'device_A', activationTime: '2023-01-02T00:00:00Z', ipAddress: '192.168.1.10', deviceTag: 'Main Computer' },
+              { hostId: 'device_B', activationTime: '2023-01-03T00:00:00Z', ipAddress: '192.168.1.11', deviceTag: 'Laptop' }
             ],
             activated: true, // Is the license currently considered active overall
-            expiration_date: undefined, // Or a date string like '2024-12-31T23:59:59Z' or null
+            expirationDate: undefined, // Or a date string like '2024-12-31T23:59:59Z' or null
           },
           customer: {
             id: 'customer_uuid_456',
@@ -239,18 +254,23 @@ describe('KeyMintSDK', () => {
         }
       };
       
-      mockPost.mockResolvedValueOnce({ data: expectedResponse });
+      mockGet.mockResolvedValueOnce({ data: expectedResponse });
 
       const result = await sdk.getKey(defaultParams);
 
-      expect(mockPost).toHaveBeenCalledWith('/get-key', defaultParams);
+      expect(mockGet).toHaveBeenCalledWith('/key', {
+        params: {
+          productId: defaultParams.productId,
+          licenseKey: defaultParams.licenseKey
+        }
+      });
       expect(result).toEqual(expectedResponse);
     });
 
     it('should throw KeyMintApiError when API returns an error (e.g., key not found)', async () => {
       const apiErrorResponse: KeyMintApiError = { message: 'License key not found', code: 3 };
       
-      mockPost.mockRejectedValueOnce({
+      mockGet.mockRejectedValueOnce({
         isAxiosError: true,
         response: { data: apiErrorResponse, status: 404 },
       });
@@ -269,7 +289,7 @@ describe('KeyMintSDK', () => {
     it('should throw a generic error for non-API errors during key retrieval', async () => {
       const networkError = new Error('DNS resolution failed');
       
-      mockPost.mockRejectedValueOnce(networkError);
+      mockGet.mockRejectedValueOnce(networkError);
 
       try {
         await sdk.getKey(defaultParams);
@@ -289,7 +309,7 @@ describe('KeyMintSDK', () => {
       licenseKey: 'lk_to_be_blocked'
     };
 
-    it('should call /block-key with correct params and return success message', async () => {
+    it('should call /key/block with correct params and return success message', async () => {
       const expectedResponse: BlockKeyResponse = { 
         code: 0, 
         message: 'Key blocked successfully' 
@@ -299,7 +319,7 @@ describe('KeyMintSDK', () => {
 
       const result = await sdk.blockKey(defaultParams);
 
-      expect(mockPost).toHaveBeenCalledWith('/block-key', defaultParams);
+      expect(mockPost).toHaveBeenCalledWith('/key/block', defaultParams);
       expect(result).toEqual(expectedResponse);
     });
 
@@ -345,7 +365,7 @@ describe('KeyMintSDK', () => {
       licenseKey: 'lk_to_be_unblocked'
     };
 
-    it('should call /unblock-key with correct params and return success message', async () => {
+    it('should call /key/unblock with correct params and return success message', async () => {
       const expectedResponse: UnblockKeyResponse = { 
         code: 0, 
         message: 'Key unblocked successfully' 
@@ -355,7 +375,7 @@ describe('KeyMintSDK', () => {
 
       const result = await sdk.unblockKey(defaultParams);
 
-      expect(mockPost).toHaveBeenCalledWith('/unblock-key', defaultParams);
+      expect(mockPost).toHaveBeenCalledWith('/key/unblock', defaultParams);
       expect(result).toEqual(expectedResponse);
     });
 
@@ -391,6 +411,110 @@ describe('KeyMintSDK', () => {
         expect(thrownError.message).toBe('API endpoint unreachable');
         expect(thrownError.code).toBe(-1);
         expect(thrownError.status).toBeUndefined();
+      }
+    });
+  });
+
+  // Customer Management Tests
+  describe('createCustomer', () => {
+    const defaultParams: CreateCustomerParams = { 
+      name: 'Test Customer', 
+      email: 'test@example.com'
+    };
+
+    it('should call /customer with correct params and return customer data', async () => {
+      const expectedResponse: CreateCustomerResponse = { 
+        action: 'createCustomer',
+        status: true,
+        message: 'Customer created successfully',
+        data: {
+          id: 'customer_123',
+          name: 'Test Customer',
+          email: 'test@example.com'
+        },
+        code: 0
+      };
+      
+      mockPost.mockResolvedValueOnce({ data: expectedResponse });
+
+      const result = await sdk.createCustomer(defaultParams);
+
+      expect(mockPost).toHaveBeenCalledWith('/customer', defaultParams);
+      expect(result).toEqual(expectedResponse);
+    });
+
+    it('should throw KeyMintApiError when customer with email already exists', async () => {
+      const apiErrorResponse: KeyMintApiError = { message: 'Customer with this email already exists', code: 409 };
+      
+      mockPost.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { data: apiErrorResponse, status: 409 },
+      });
+
+      try {
+        await sdk.createCustomer(defaultParams);
+        fail('Expected createCustomer to throw KeyMintApiError');
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(409);
+      }
+    });
+  });
+
+  describe('getAllCustomers', () => {
+    it('should call /customer with GET method and return customers list', async () => {
+      const expectedResponse: GetAllCustomersResponse = { 
+        action: 'getCustomers',
+        status: true,
+        data: [
+          {
+            id: 'customer_1',
+            name: 'Customer One',
+            email: 'customer1@example.com',
+            active: true,
+            createdAt: '2025-09-01T14:46:10.932Z',
+            updatedAt: '2025-09-01T14:46:10.622Z',
+            createdBy: 'user_123'
+          },
+          {
+            id: 'customer_2',
+            name: 'Customer Two',
+            email: 'customer2@example.com',
+            active: true,
+            createdAt: '2025-09-01T15:46:10.932Z',
+            updatedAt: '2025-09-01T15:46:10.622Z',
+            createdBy: 'user_123'
+          }
+        ],
+        code: 0
+      };
+      
+      mockGet.mockResolvedValueOnce({ data: expectedResponse });
+
+      const result = await sdk.getAllCustomers();
+
+      expect(mockGet).toHaveBeenCalledWith('/customer', { params: undefined });
+      expect(result).toEqual(expectedResponse);
+    });
+
+    it('should throw KeyMintApiError when API returns an error', async () => {
+      const apiErrorResponse: KeyMintApiError = { message: 'Unauthorized access', code: 401 };
+      
+      mockGet.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { data: apiErrorResponse, status: 401 },
+      });
+
+      try {
+        await sdk.getAllCustomers();
+        fail('Expected getAllCustomers to throw KeyMintApiError');
+      } catch (error) {
+        const thrownError = error as KeyMintApiError;
+        expect(thrownError.message).toBe(apiErrorResponse.message);
+        expect(thrownError.code).toBe(apiErrorResponse.code);
+        expect(thrownError.status).toBe(401);
       }
     });
   });

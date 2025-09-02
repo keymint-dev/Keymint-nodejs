@@ -19,8 +19,9 @@ import { KeyMintSDK } from 'keymint-nodejs';
 
 async function main() {
   const accessToken = process.env.KEYMINT_ACCESS_TOKEN;
-  if (!accessToken) {
-    console.error('Please set the KEYMINT_ACCESS_TOKEN environment variable.');
+  const productId = process.env.KEYMINT_PRODUCT_ID;
+  if (!accessToken || !productId) {
+    console.error('Please set the KEYMINT_ACCESS_TOKEN and KEYMINT_PRODUCT_ID environment variables.');
     return;
   }
 
@@ -29,14 +30,15 @@ async function main() {
   try {
     // 1. Create a new license key
     const createResponse = await sdk.createKey({
-      productId: 'YOUR_PRODUCT_ID',
+      productId: productId,
+      maxActivations: '5', // Optional: Maximum number of activations
     });
     const licenseKey = createResponse.key;
     console.log('Key created:', licenseKey);
 
     // 2. Activate the license key
     const activateResponse = await sdk.activateKey({
-      productId: 'YOUR_PRODUCT_ID',
+      productId: productId,
       licenseKey: licenseKey,
       hostId: 'UNIQUE_DEVICE_ID',
     });
@@ -70,13 +72,18 @@ First, import the `KeyMintSDK` and initialize it with your access token. You can
 ```typescript
 import { KeyMintSDK } from 'keymint-nodejs';
 
-const accessToken = 'YOUR_ACCESS_TOKEN';
+const accessToken = process.env.KEYMINT_ACCESS_TOKEN;
+if (!accessToken) {
+  throw new Error('Please set the KEYMINT_ACCESS_TOKEN environment variable.');
+}
 const sdk = new KeyMintSDK(accessToken);
 ```
 
 ### API Methods
 
 All methods are asynchronous and return a `Promise`.
+
+#### License Key Management
 
 | Method          | Description                                     |
 | --------------- | ----------------------------------------------- |
@@ -87,24 +94,118 @@ All methods are asynchronous and return a `Promise`.
 | `blockKey`      | Blocks a license key.                           |
 | `unblockKey`    | Unblocks a previously blocked license key.      |
 
+#### Customer Management
+
+| Method                | Description                                       |
+| --------------------- | ------------------------------------------------- |
+| `createCustomer`      | Creates a new customer.                           |
+| `getAllCustomers`     | Retrieves all customers.                          |
+| `getCustomerWithKeys` | Gets a customer along with their license keys.   |
+| `updateCustomer`      | Updates an existing customer's information.       |
+
 For more detailed information about the API methods and their parameters, please refer to the [API Reference](#api-reference) section below.
 
 ## 🚨 Error Handling
 
-If an API call fails, the SDK will throw a `KeyMintApiError` object. This object contains a `message`, `code`, and `status` property that you can use to handle the error.
+If an API call fails, the SDK will throw an error object that matches the `KeyMintApiError` interface. Since this is not a runtime class, use property checks instead of `instanceof`.
 
 ```typescript
 try {
   // ...
 } catch (error) {
-  if (error instanceof KeyMintApiError) {
-    console.error('API Error:', error.message);
-    console.error('Status:', error.status);
-    console.error('Code:', error.code);
+  // Type guard: check for the presence of expected properties
+  if (error && typeof error === 'object' && 'code' in (error as Record<string, unknown>)) {
+    const apiError = error as KeyMintApiError;
+    console.error('API Error:', apiError.message);
+    console.error('Status:', apiError.status);
+    console.error('Code:', apiError.code);
   } else {
     console.error('An unexpected error occurred:', error);
   }
 }
+```
+
+## 📋 Examples
+
+### Customer Management
+
+```typescript
+// Create a new customer
+const customer = await sdk.createCustomer({
+  name: 'John Doe',
+  email: 'john@example.com'
+});
+
+// Get all customers
+const customers = await sdk.getAllCustomers();
+
+// Get customer with their license keys
+const customerWithKeys = await sdk.getCustomerWithKeys({
+  customerId: customer.data.id
+});
+
+// Update customer
+const updatedCustomer = await sdk.updateCustomer({
+  customerId: customer.data.id,
+  name: 'John Smith',
+  active: true
+});
+```
+
+### Creating a License Key with a New Customer
+
+```typescript
+const licenseResponse = await sdk.createKey({
+  productId: process.env.KEYMINT_PRODUCT_ID!,
+  maxActivations: '3', // Optional
+  newCustomer: {
+    name: 'Jane Doe',
+    email: 'jane@example.com'
+  }
+});
+```
+
+## 🔒 Security Best Practices
+
+**Never hardcode your access tokens!** Always use environment variables:
+
+1. **Create a `.env` file** (copy from `.env.example`):
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Add your credentials** to `.env`:
+   ```bash
+   KEYMINT_ACCESS_TOKEN=your_actual_token_here
+   KEYMINT_PRODUCT_ID=your_product_id_here
+   ```
+
+3. **Use environment variables** in your code:
+   ```typescript
+   const accessToken = process.env.KEYMINT_ACCESS_TOKEN;
+   const sdk = new KeyMintSDK(accessToken);
+   ```
+
+⚠️ **Important**: Never commit `.env` files to version control. The `.gitignore` file already excludes them.
+
+## 🧪 Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### Real Environment Testing
+```bash
+# Set your credentials
+export KEYMINT_ACCESS_TOKEN="your_token_here"
+export KEYMINT_PRODUCT_ID="your_product_id_here"
+
+# Run real environment tests
+npm run test:real
+
+# Or run manual tests
+npm start
 ```
 
 ## 📚 API Reference
@@ -164,6 +265,54 @@ try {
 | `productId`  | `string` | **Required.** The ID of the product.                                        |
 | `licenseKey` | `string` | **Required.** The license key to unblock.                                   |
 
+### Customer Management Methods
+
+#### `createCustomer(params)`
+
+| Parameter | Type     | Description                                      |
+| --------- | -------- | ------------------------------------------------ |
+| `name`    | `string` | **Required.** The customer's name.              |
+| `email`   | `string` | **Required.** The customer's email address.     |
+
+#### `getAllCustomers()`
+
+No parameters required. Returns a list of all customers.
+
+#### `getCustomerWithKeys(params)`
+
+| Parameter    | Type     | Description                              |
+| ------------ | -------- | ---------------------------------------- |
+| `customerId` | `string` | **Required.** The ID of the customer.   |
+
+#### `updateCustomer(params)`
+
+| Parameter    | Type      | Description                                           |
+| ------------ | --------- | ----------------------------------------------------- |
+| `customerId` | `string`  | **Required.** The ID of the customer to update.      |
+| `name`       | `string`  | *Optional.* Updated customer name.                    |
+| `email`      | `string`  | *Optional.* Updated customer email.                   |
+| `active`     | `boolean` | *Optional.* Whether the customer is active.          |
+
 ## 📜 License
 
 This SDK is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+This SDK has been updated to match the latest KeyMint API changes:
+
+**New Features:**
+- ✅ Added customer management methods (`createCustomer`, `getAllCustomers`, `getCustomerWithKeys`, `updateCustomer`)
+- ✅ Updated API endpoints to match new API structure
+- ✅ Enhanced type safety with updated TypeScript interfaces
+- ✅ `maxActivations` is now optional when creating license keys
+
+**API Endpoint Changes:**
+- `/create-key` → `/key`
+- `/activate-key` → `/key/activate`
+- `/deactivate-key` → `/key/deactivate`
+- `/get-key` → `/key` (now uses GET method)
+- `/block-key` → `/key/block`
+- `/unblock-key` → `/key/unblock`
+
+**Breaking Changes:**
+- Response field names have been updated to camelCase (e.g., `licensee_name` → `licenseeName`)
+- The `getKey` method now uses GET request with query parameters instead of POST

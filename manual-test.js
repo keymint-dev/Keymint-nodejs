@@ -2,18 +2,28 @@
 const { KeyMintSDK } = require('./dist/index.js'); // Import the compiled SDK
 
 async function testKeyMint() {
-  const validAccessToken = "at_PeXNJnwg0t224ATok06bBWGEaKJ7QasUpjDYWilsvKQ2f175509d3ed680bfb43590dd7a030dc1";
+  // Use environment variables for security
+  const validAccessToken = process.env.KEYMINT_ACCESS_TOKEN;
   const invalidAccessToken = "at_invalid_token_string_example";
-  const validProductId = "4b37dac291c517aad2f958";
+  const validProductId = process.env.KEYMINT_PRODUCT_ID;
   const malformedProductId = "malformed-pid";
   const validHostId = "manual-test-host- thriving-banana-07";
   const anotherHostId = "manual-test-host-active-giraffe-08";
   const validDeviceTag = "TestDevice_MacBookPro";
   
   let createdLicenseKey = null; // To store the license key string from createKey
+  let createdCustomerId = null;
+  let createdCustomerEmail = null;
 
   if (!validAccessToken) {
-    console.error("Please set the validAccessToken variable.");
+    console.error("❌ Please set KEYMINT_ACCESS_TOKEN environment variable");
+    console.log("💡 Usage: KEYMINT_ACCESS_TOKEN=your_token KEYMINT_PRODUCT_ID=your_product_id npm start");
+    return;
+  }
+
+  if (!validProductId) {
+    console.error("❌ Please set KEYMINT_PRODUCT_ID environment variable");
+    console.log("💡 Usage: KEYMINT_ACCESS_TOKEN=your_token KEYMINT_PRODUCT_ID=your_product_id npm start");
     return;
   }
 
@@ -26,7 +36,11 @@ async function testKeyMint() {
   console.log("\n--- [1] Testing createKey ---");
   console.log("\n[1.1] Attempting to create a key (Valid Params)...");
   try {
-    const createParams = { productId: validProductId, metadata: { test_suite_run: "full_flow" } };
+    const createParams = { 
+      productId: validProductId, 
+      maxActivations: '5', // Required parameter
+      metadata: { test_suite_run: "full_flow" } 
+    };
     const newKeyResponse = await sdk.createKey(createParams);
     console.log("[1.1] Raw response from createKey (Valid Params):");
     console.log(newKeyResponse);
@@ -47,9 +61,9 @@ async function testKeyMint() {
   console.log("\n[1.2] Attempting to create a key (Missing productId)...");
   try { await sdk.createKey({}); console.log("Unexpected success"); } catch (error) { console.error("[1.2] Raw error (Missing productId - Expected):"); console.error(error); }
   console.log("\n[1.3] Attempting to create a key (Malformed productId)...");
-  try { await sdk.createKey({ productId: malformedProductId }); console.log("Unexpected success"); } catch (error) { console.error("[1.3] Raw error (Malformed productId - Expected):"); console.error(error); }
+  try { await sdk.createKey({ productId: malformedProductId, maxActivations: '5' }); console.log("Unexpected success"); } catch (error) { console.error("[1.3] Raw error (Malformed productId - Expected):"); console.error(error); }
   console.log("\n[1.4] Attempting to create a key (Invalid Access Token)...");
-  try { await sdkInvalidToken.createKey({ productId: validProductId }); console.log("Unexpected success"); } catch (error) { console.error("[1.4] Raw error (Invalid AT - Expected):"); console.error(error); }
+  try { await sdkInvalidToken.createKey({ productId: validProductId, maxActivations: '5' }); console.log("Unexpected success"); } catch (error) { console.error("[1.4] Raw error (Invalid AT - Expected):"); console.error(error); }
 
   // --- 2. Test getKey (Initial state) ---
   console.log("\n\n--- [2] Testing getKey (Initial State) ---");
@@ -227,8 +241,89 @@ async function testKeyMint() {
     console.error(error);
   }
 
+  // --- 14. Test Customer Management ---
+  console.log("\n\n--- [14] Testing Customer Management ---");
+  
+  // Test createCustomer
+  console.log("\n[14.1] Attempting to create a customer...");
+  try {
+    const customerData = {
+      name: "Test Customer from SDK",
+      email: `test-${Date.now()}@example.com` // Unique email to avoid conflicts
+    };
+    const customerResponse = await sdk.createCustomer(customerData);
+    console.log("[14.1] Raw response from createCustomer:");
+    console.log(customerResponse);
+    if (customerResponse && customerResponse.data && customerResponse.data.id) {
+      createdCustomerId = customerResponse.data.id;
+      createdCustomerEmail = customerData.email;
+      console.log(`Stored customerId for subsequent tests: ${createdCustomerId}`);
+    }
+  } catch (error) {
+    console.error("[14.1] Raw error creating customer:");
+    console.error(error);
+  }
+
+  // Test getAllCustomers
+  console.log("\n[14.2] Attempting to get all customers...");
+  try {
+    const customersResponse = await sdk.getAllCustomers();
+    console.log("[14.2] Raw response from getAllCustomers:");
+    console.log(customersResponse);
+  } catch (error) {
+    console.error("[14.2] Raw error getting all customers:");
+    console.error(error);
+  }
+
+  // Test getCustomerWithKeys (if we have a customer ID)
+  if (createdCustomerId) {
+    console.log(`\n[14.3] Attempting to get customer with keys (ID: ${createdCustomerId})...`);
+    try {
+      const customerWithKeysResponse = await sdk.getCustomerWithKeys({ customerId: createdCustomerId });
+      console.log("[14.3] Raw response from getCustomerWithKeys:");
+      console.log(customerWithKeysResponse);
+    } catch (error) {
+      console.error("[14.3] Raw error getting customer with keys:");
+      console.error(error);
+    }
+
+    // Test updateCustomer
+    console.log(`\n[14.4] Attempting to update customer (ID: ${createdCustomerId})...`);
+    try {
+      const updateData = {
+        customerId: createdCustomerId,
+        name: "Updated Test Customer from SDK",
+        active: true
+      };
+      const updateResponse = await sdk.updateCustomer(updateData);
+      console.log("[14.4] Raw response from updateCustomer:");
+      console.log(updateResponse);
+    } catch (error) {
+      console.error("[14.4] Raw error updating customer:");
+      console.error(error);
+    }
+  }
+
+  // Test creating a license key with a new customer
+  console.log("\n[14.5] Attempting to create a license key with a new customer...");
+  try {
+    const createKeyWithCustomerParams = {
+      productId: validProductId,
+      maxActivations: '3',
+      newCustomer: {
+        name: "New Customer from License Creation",
+        email: `new-customer-${Date.now()}@example.com`
+      }
+    };
+    const keyWithCustomerResponse = await sdk.createKey(createKeyWithCustomerParams);
+    console.log("[14.5] Raw response from createKey with new customer:");
+    console.log(keyWithCustomerResponse);
+  } catch (error) {
+    console.error("[14.5] Raw error creating key with new customer:");
+    console.error(error);
+  }
+
   console.log("\n--- KeyMint SDK Full Manual Test Suite Finished ---");
 }
 
 testKeyMint();
- 

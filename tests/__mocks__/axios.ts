@@ -1,4 +1,3 @@
-// /Users/kliff/CascadeProjects/cascade/tests/__mocks__/axios.ts
 const mockAxiosInstance = {
   post: jest.fn(),
   get: jest.fn(), // Added for completeness, though not used yet

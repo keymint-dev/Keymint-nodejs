@@ -1,5 +1,3 @@
-// /Users/kliff/CascadeProjects/cascade/src/types.ts
-
 /**
  * Represents the structure for creating a new customer
  * when creating a license key.
@@ -51,10 +49,10 @@ export interface ActivateKeyParams {
  * Response structure for a successful activateKey API call.
  */
 export interface ActivateKeyResponse {
-  code: number;           // API response code (e.g., 0 for success)
-  message: string;        // Activation status message (e.g., "License valid")
-  licensee_name?: string; // Optional: Name of the licensee
-  licensee_email?: string;// Optional: Email of the licensee
+  code: number;             // API response code (e.g., 0 for success)
+  message: string;          // Activation status message (e.g., "License valid")
+  licenseeName?: string;    // Optional: Name of the licensee (updated field name)
+  licenseeEmail?: string;   // Optional: Email of the licensee (updated field name)
 }
 
 /**
@@ -78,10 +76,10 @@ export interface DeactivateKeyResponse {
  * Device details included in the GetKeyResponse.
  */
 export interface DeviceDetails {
-  host_id: string;
-  device_tag?: string;
-  ip_address?: string;
-  activation_time: string;
+  hostId: string;           // Updated field name
+  deviceTag?: string;       // Updated field name  
+  ipAddress?: string;       // Updated field name
+  activationTime: string;   // Updated field name
 }
 
 /**
@@ -90,12 +88,12 @@ export interface DeviceDetails {
 export interface LicenseDetails {
   id: string;
   key: string;
-  product_id: string;
-  max_activations: number;
+  productId: string;        // Updated field name
+  maxActivations: number;   // Updated field name
   activations: number;
   devices: DeviceDetails[];
   activated: boolean;
-  expiration_date?: string; // Optional, might not be present
+  expirationDate?: string;  // Updated field name
 }
 
 /**
@@ -157,4 +155,104 @@ export interface UnblockKeyParams {
 export interface UnblockKeyResponse {
   message: string; // Confirmation message (e.g., "Key unblocked")
   code: number;    // API response code (e.g., 0 for success)
+}
+
+/**
+ * Parameters for the createCustomer API endpoint.
+ */
+export interface CreateCustomerParams {
+  name: string;     // Required: Customer name
+  email: string;    // Required: Customer email
+}
+
+/**
+ * Response structure for a successful createCustomer API call.
+ */
+export interface CreateCustomerResponse {
+  action: string;   // Action performed (e.g., "createCustomer")
+  status: boolean;  // Success status
+  message: string;  // Success message
+  data: {
+    id: string;     // Customer ID
+    name: string;   // Customer name
+    email: string;  // Customer email
+  };
+  code: number;     // API response code (e.g., 0 for success)
+}
+
+/**
+ * Customer information in the getAllCustomers response.
+ */
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
+/**
+ * Response structure for a successful getAllCustomers API call.
+ */
+export interface GetAllCustomersResponse {
+  action: string;     // Action performed (e.g., "getCustomers")
+  status: boolean;    // Success status
+  data: Customer[];   // Array of customer objects
+  code: number;       // API response code (e.g., 0 for success)
+}
+
+/**
+ * Parameters for the getCustomerWithKeys API endpoint.
+ */
+export interface GetCustomerWithKeysParams {
+  customerId: string; // Required: The customer ID
+}
+
+/**
+ * License key information in customer with keys response.
+ */
+export interface CustomerLicenseKey {
+  id: string;
+  key: string;
+  productId: string;
+  maxActivations: number;
+  activations: number;
+  activated: boolean;
+  expirationDate?: string;
+}
+
+/**
+ * Response structure for a successful getCustomerWithKeys API call.
+ */
+export interface GetCustomerWithKeysResponse {
+  action: string;
+  status: boolean;
+  data: {
+    customer: Customer;
+    licenseKeys: CustomerLicenseKey[];
+  };
+  code: number;
+}
+
+/**
+ * Parameters for the updateCustomer API endpoint.
+ */
+export interface UpdateCustomerParams {
+  customerId: string;  // Required: The customer ID
+  name?: string;       // Optional: Updated customer name
+  email?: string;      // Optional: Updated customer email
+  active?: boolean;    // Optional: Customer active status
+}
+
+/**
+ * Response structure for a successful updateCustomer API call.
+ */
+export interface UpdateCustomerResponse {
+  action: string;
+  status: boolean;
+  message: string;
+  data: Customer;
+  code: number;
 }

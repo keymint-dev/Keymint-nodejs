@@ -6,6 +6,9 @@ node_modules/
 # Build output
 dist/
 
+# npm pack artifacts
+*.tgz
+
 # Environment variables
 .env
 .env.*
