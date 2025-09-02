@@ -105,7 +105,6 @@ All methods are asynchronous and return a `Promise`.
 | `updateCustomer`      | Updates an existing customer's information.       |
 | `toggleCustomerStatus`| Toggles a customer's active status.              |
 | `deleteCustomer`      | Permanently deletes a customer and their keys.   |
-| `deleteCustomer`      | Permanently deletes a customer and all associated license keys. |
 
 For more detailed information about the API methods and their parameters, please refer to the [API Reference](#api-reference) section below.
 
