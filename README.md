@@ -12,13 +12,13 @@ A professional, production-ready SDK for integrating with the KeyMint API in Nod
 Add the SDK to your project:
 
 ```bash
-npm install keymint-nodejs
+npm install keymint
 ```
 
 ## Usage
 
 ```typescript
-import { KeyMintSDK } from 'keymint-nodejs';
+import KeyMint from 'keymint';
 
 const accessToken = process.env.KEYMINT_ACCESS_TOKEN;
 const productId = process.env.KEYMINT_PRODUCT_ID;
@@ -27,7 +27,7 @@ if (!accessToken || !productId) {
   throw new Error('Please set the KEYMINT_ACCESS_TOKEN and KEYMINT_PRODUCT_ID environment variables.');
 }
 
-const sdk = new KeyMintSDK(accessToken);
+const sdk = new KeyMint(accessToken);
 
 // Example: Create a key
 const result = await sdk.createKey({ productId });

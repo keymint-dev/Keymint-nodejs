@@ -14,7 +14,7 @@ import {
 // Export all types from types.ts to make them available to SDK users
 export * from './types';
 
-export class KeyMintSDK {
+export class KeyMint {
   private apiClient: AxiosInstance;
 
   constructor(accessToken: string, baseUrl = "https://api.keymint.dev") {
@@ -252,3 +252,5 @@ export class KeyMintSDK {
     }
   }
 }
+
+export default KeyMint;
