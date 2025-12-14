@@ -8,7 +8,8 @@ import {
   UnblockKeyResponse, CreateCustomerParams, CreateCustomerResponse,
   GetAllCustomersResponse, GetCustomerWithKeysParams, GetCustomerWithKeysResponse,
   UpdateCustomerParams, UpdateCustomerResponse, DeleteCustomerParams, DeleteCustomerResponse,
-  ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse
+  ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse,
+  GetAllCustomersParams
 } from './types';
 
 // Export all types from types.ts to make them available to SDK users
@@ -51,7 +52,7 @@ export class KeyMint {
    * @param params - Query parameters
    * @returns A promise that resolves with the API response
    */
-  private async handleGetRequest<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  private async handleGetRequest<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     try {
       const response = await this.apiClient.get<T>(endpoint, { params });
       return response.data;
@@ -158,10 +159,11 @@ export class KeyMint {
 
   /**
    * Retrieves all customers.
+   * @param params - Optional parameters for pagination and filtering.
    * @returns A promise that resolves with the list of all customers or rejects with an error.
    */
-  async getAllCustomers(): Promise<GetAllCustomersResponse> {
-    return this.handleGetRequest<GetAllCustomersResponse>('/customer');
+  async getAllCustomers(params?: GetAllCustomersParams): Promise<GetAllCustomersResponse> {
+    return this.handleGetRequest<GetAllCustomersResponse>('/customer', params);
   }
 
   /**

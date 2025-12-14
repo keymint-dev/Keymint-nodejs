@@ -194,12 +194,32 @@ export interface Customer {
 }
 
 /**
+ * Parameters for the getAllCustomers API endpoint.
+ */
+export interface GetAllCustomersParams {
+  page?: number;   // Optional: Page number
+  limit?: number;  // Optional: Items per page
+  email?: string;  // Optional: Filter by email
+}
+
+/**
+ * Pagination metadata included in list responses.
+ */
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
  * Response structure for a successful getAllCustomers API call.
  */
 export interface GetAllCustomersResponse {
   action: string;     // Action performed (e.g., "getCustomers")
   status: boolean;    // Success status
   data: Customer[];   // Array of customer objects
+  meta?: PaginationMeta; // Optional: Pagination metadata
   code: number;       // API response code (e.g., 0 for success)
 }
 
