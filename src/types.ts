@@ -15,6 +15,8 @@ export interface CreateKeyParams {
   maxActivations?: string;    // Optional: The maximum number of times the key can be activated.
   expiryDate?: string;        // Optional: The expiration date of the key in ISO 8601 format.
   customerId?: string;        // Optional: The ID of an existing customer to associate with the key.
+  versionId?: string;         // Optional: The ID of a specific product version to associate with the key.
+  metadata?: Record<string, any>; // Optional: Custom dictionary payload to attach to the license key.
   newCustomer?: NewCustomer;  // Optional: An object to create and associate a new customer with the key.
 }
 
@@ -53,6 +55,11 @@ export interface ActivateKeyResponse {
   message: string;          // Activation status message (e.g., "License valid")
   licenseeName?: string;    // Optional: Name of the licensee (updated field name)
   licenseeEmail?: string;   // Optional: Email of the licensee (updated field name)
+  metadata?: Record<string, any> | null; // Optional: Custom dictionary attached to the license key.
+  versionId?: string | null;       // Optional: Associated product version ID.
+  version?: {               // Optional: Detailed product version information.
+    version: string;
+  };
 }
 
 /**
@@ -93,7 +100,15 @@ export interface LicenseDetails {
   activations: number;
   devices: DeviceDetails[];
   activated: boolean;
-  expirationDate?: string;  // Updated field name
+  expirationDate?: string | null;  // Updated field name
+  versionId?: string | null;
+  metadata?: Record<string, any> | null;
+  version?: {
+    id: string;
+    version: string;
+    description: string | null;
+    active: boolean;
+  } | null;
 }
 
 /**
@@ -241,6 +256,8 @@ export interface CustomerLicenseKey {
   activations: number;
   activated: boolean;
   expirationDate?: string;
+  versionId?: string;
+  metadata?: Record<string, any>;
 }
 
 /**
