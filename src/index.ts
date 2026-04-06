@@ -102,6 +102,12 @@ export class KeyMint {
 
   /**
    * Activates a license key for a specific device.
+   * 
+   * **Note on hostId**: If `hostId` is omitted, Keymint will generate a random Device ID for this request. 
+   * Because the generated ID is random, Keymint will treat every subsequent activation request 
+   * from that same app without a `hostId` as a brand-new machine, consuming additional activation slots.
+   * If you perform an anonymous activation, you MUST cache the result locally.
+   * 
    * @param params - Parameters for activating the key.
    * @returns A promise that resolves with the activation status or rejects with an error.
    */
