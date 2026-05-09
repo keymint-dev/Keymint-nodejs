@@ -18,6 +18,7 @@ export interface CreateKeyParams {
   versionId?: string;         // Optional: The ID of a specific product version to associate with the key.
   metadata?: Record<string, any>; // Optional: Custom dictionary payload to attach to the license key.
   newCustomer?: NewCustomer;  // Optional: An object to create and associate a new customer with the key.
+  allowedHosts?: string[];    // Optional: List of machine IDs authorized to use this license.
 }
 
 /**
@@ -60,6 +61,7 @@ export interface ActivateKeyResponse {
   version?: {               // Optional: Detailed product version information.
     version: string;
   };
+  allowedHosts?: string[] | null; // Optional: List of authorized machine IDs.
 }
 
 /**
@@ -103,6 +105,7 @@ export interface LicenseDetails {
   expirationDate?: string | null;  // Updated field name
   versionId?: string | null;
   metadata?: Record<string, any> | null;
+  allowedHosts?: string[] | null;
   version?: {
     id: string;
     version: string;
@@ -258,6 +261,7 @@ export interface CustomerLicenseKey {
   expirationDate?: string;
   versionId?: string;
   metadata?: Record<string, any>;
+  allowedHosts?: string[];
 }
 
 /**
