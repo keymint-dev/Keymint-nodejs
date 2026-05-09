@@ -1,6 +1,6 @@
-# KeyMint NodeJS SDK
+# Keymint Node.js
 
-A professional, production-ready SDK for integrating with the KeyMint API in Node.js/TypeScript. Provides robust, async-first access to all major KeyMint features, with strong typing and modern error handling.
+A professional, production-ready SDK for integrating with the Keymint API in Node.js/TypeScript. Provides robust, async-first access to all major Keymint features, with strong typing and modern error handling.
 
 ## Features
 - **Async/await**: All API calls are asynchronous.
@@ -18,7 +18,7 @@ npm install keymint
 ## Usage
 
 ```typescript
-import KeyMint from 'keymint';
+import { KeyMint } from 'keymint';
 
 const accessToken = process.env.KEYMINT_ACCESS_TOKEN;
 const productId = process.env.KEYMINT_PRODUCT_ID;
@@ -30,12 +30,14 @@ if (!accessToken || !productId) {
 const sdk = new KeyMint(accessToken);
 
 // Example: Create a key
-const result = await sdk.createKey({ productId });
+const result = await sdk.createKey({ 
+  productId,
+  allowedHosts: ['machine-a'] 
+});
+
 if (result && result.key) {
   const key = result.key;
   // ...
-} else {
-  // Handle error
 }
 ```
 
@@ -43,8 +45,6 @@ if (result && result.key) {
 All SDK methods return a `Promise` that resolves to a result object. Check for error properties before using the data. No API errors are thrown as uncaught exceptions.
 
 ## API Methods
-
-All methods are asynchronous and return a `Promise`.
 
 ### License Key Management
 
@@ -69,10 +69,8 @@ All methods are asynchronous and return a `Promise`.
 | `toggleCustomerStatus`| Toggles a customer's active status.              |
 | `deleteCustomer`      | Permanently deletes a customer and their keys.   |
 
-For detailed parameter and response types, see the [KeyMint API docs](https://docs.keymint.dev) or use your IDE's IntelliSense.
-
 ## License
 MIT
 
 ## Support
-For help, see [KeyMint API docs](https://docs.keymint.dev) or open an issue.
+For help, see [Keymint API docs](https://docs.keymint.dev) or open an issue.

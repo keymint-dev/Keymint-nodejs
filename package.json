@@ -1,6 +1,6 @@
 {
   "name": "keymint",
-  "version": "1.0.2",
+  "version": "1.1.1",
   "description": "SDK for interacting with the KeyMint API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     "software licensing",
     "nodejs"
   ],
-  "author": "Keymint <admin@keymint.dev>",
+  "author": "Keymint <cliff@keymint.dev>",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.19.17",
