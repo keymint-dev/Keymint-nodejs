@@ -20,14 +20,14 @@ npm install keymint
 ```typescript
 import { KeyMint } from 'keymint';
 
-const accessToken = process.env.KEYMINT_ACCESS_TOKEN;
+const apiKey = process.env.KEYMINT_API_KEY;
 const productId = process.env.KEYMINT_PRODUCT_ID;
 
-if (!accessToken || !productId) {
-  throw new Error('Please set the KEYMINT_ACCESS_TOKEN and KEYMINT_PRODUCT_ID environment variables.');
+if (!apiKey || !productId) {
+  throw new Error('Please set the KEYMINT_API_KEY and KEYMINT_PRODUCT_ID environment variables.');
 }
 
-const sdk = new KeyMint(accessToken);
+const sdk = new KeyMint(apiKey);
 
 // 1. Get a stable, unique ID for this machine
 const hostId = KeyMint.getOrCreateInstallationId();
