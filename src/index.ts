@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { createHash, randomUUID } from 'crypto';
+import { createHash, randomUUID, createHmac } from 'crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -13,7 +13,8 @@ import {
   GetAllCustomersResponse, GetCustomerWithKeysParams, GetCustomerWithKeysResponse,
   UpdateCustomerParams, UpdateCustomerResponse, DeleteCustomerParams, DeleteCustomerResponse,
   ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse,
-  GetAllCustomersParams
+  GetAllCustomersParams, FloatingCheckoutParams, FloatingCheckoutResponse,
+  FloatingHeartbeatParams, FloatingHeartbeatResponse, FloatingCheckinParams, FloatingCheckinResponse
 } from './types';
 
 // Export all types from types.ts to make them available to SDK users
@@ -88,14 +89,33 @@ export class KeyMint {
     const uuid = randomUUID();
     const compositeId = `${uuid}:${hardwareAnchor}:${Date.now()}`;
 
-    // 3. Persist it
-    const dir = filePath.substring(0, filePath.lastIndexOf('/'));
-    if (dir && !existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
+    // 3. Persist it (with fallback for read-only filesystems like Vercel/Lambda)
+    try {
+      const dir = filePath.substring(0, filePath.lastIndexOf('/'));
+      if (dir && !existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+      writeFileSync(filePath, compositeId, 'utf8');
+    } catch (err) {
+      // Silently swallow error and fall back to returning the generated ID in-memory
     }
-    writeFileSync(filePath, compositeId, 'utf8');
 
     return createHash('sha256').update(compositeId).digest('hex');
+  }
+
+  /**
+   * Generates a cryptographic signature for a heartbeat or checkin request
+   * using the sessionSecret and the rotating nextNonce (passed as the timestamp).
+   *
+   * @param sessionId - The 22-character unique session ID.
+   * @param nonce - The rotating nonce string (nextNonce) received from the previous response.
+   * @param sessionSecret - The temporary session secret key received during checkout.
+   * @returns A 64-character hexadecimal signature string.
+   */
+  static generateSessionSignature(sessionId: string, nonce: string, sessionSecret: string): string {
+    return createHmac('sha256', sessionSecret)
+      .update(`${sessionId}:${nonce}`)
+      .digest('hex');
   }
 
   // ─── Private: Fingerprint Layers ─────────────────────────────────────
@@ -198,14 +218,14 @@ export class KeyMint {
 
   private apiClient: AxiosInstance;
 
-  constructor(accessToken: string, baseUrl = "https://api.keymint.dev") {
-    if (!accessToken) {
-      throw new Error("Access token is required to initialize the SDK.");
+  constructor(apiKey: string, baseUrl = "https://api.keymint.dev") {
+    if (!apiKey) {
+      throw new Error("API key is required to initialize the SDK.");
     }
     this.apiClient = axios.create({
       baseURL: baseUrl,
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       }
     });
@@ -302,6 +322,33 @@ export class KeyMint {
    */
   async deactivateKey(params: DeactivateKeyParams): Promise<DeactivateKeyResponse> {
     return this.handleRequest<DeactivateKeyResponse>('/key/deactivate', params);
+  }
+
+  /**
+   * Checks out a floating license seat.
+   * @param params - Parameters for checking out the license.
+   * @returns A promise that resolves with the checkout response.
+   */
+  async floatingCheckout(params: FloatingCheckoutParams): Promise<FloatingCheckoutResponse> {
+    return this.handleRequest<FloatingCheckoutResponse>('/key/checkout', params);
+  }
+
+  /**
+   * Sends a heartbeat to keep a floating license session alive.
+   * @param params - Parameters for the heartbeat.
+   * @returns A promise that resolves with the heartbeat response.
+   */
+  async floatingHeartbeat(params: FloatingHeartbeatParams): Promise<FloatingHeartbeatResponse> {
+    return this.handleRequest<FloatingHeartbeatResponse>('/key/heartbeat', params);
+  }
+
+  /**
+   * Checks in a floating license session, releasing the seat.
+   * @param params - Parameters for checking in the license.
+   * @returns A promise that resolves with the checkin response.
+   */
+  async floatingCheckin(params: FloatingCheckinParams): Promise<FloatingCheckinResponse> {
+    return this.handleRequest<FloatingCheckinResponse>('/key/checkin', params);
   }
 
   /**

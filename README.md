@@ -6,7 +6,7 @@ A professional, production-ready SDK for integrating with the Keymint API in Nod
 - **Async/await**: All API calls are asynchronous.
 - **TypeScript-first**: Strongly typed request and response models for all endpoints.
 - **Consistent error handling**: All API errors are returned as structured objects.
-- **Security**: Credentials are always loaded from environment variables.
+- **Machine Identity**: Built-in utilities for hardware fingerprinting and stable installation IDs.
 
 ## Installation
 Add the SDK to your project:
@@ -29,20 +29,25 @@ if (!accessToken || !productId) {
 
 const sdk = new KeyMint(accessToken);
 
-// Example: Create a key
+// 1. Get a stable, unique ID for this machine
+const hostId = KeyMint.getOrCreateInstallationId();
+
+// 2. Create a key authorized only for this machine
 const result = await sdk.createKey({ 
   productId,
-  allowedHosts: ['machine-a'] 
+  allowedHosts: [hostId] 
 });
 
 if (result && result.key) {
-  const key = result.key;
-  // ...
+  console.log(`Created Key: ${result.key}`);
 }
 ```
 
-## Error Handling
-All SDK methods return a `Promise` that resolves to a result object. Check for error properties before using the data. No API errors are thrown as uncaught exceptions.
+## Machine Identity
+Keymint provides utilities to uniquely identify machines for node-locking:
+
+- `KeyMint.getOrCreateInstallationId()`: **Recommended.** Generates a stable UUID anchored to hardware and persists it to `~/.keymint/installation-id`.
+- `KeyMint.getMachineId()`: Generates a SHA-256 fingerprint based on BIOS UUID, OS machine ID, and MAC address.
 
 ## API Methods
 

@@ -348,3 +348,75 @@ export interface DeleteCustomerResponse {
   message: string;     // Status message (e.g., "Customer deleted")
   code: number;        // API response code
 }
+
+/**
+ * Parameters for the floating license checkout API endpoint.
+ */
+export interface FloatingCheckoutParams {
+  productId: string;        // Required: The unique identifier of the product.
+  licenseKey: string;       // Required: The license key.
+  hostId: string;           // Required: The unique hardware identifier of the device.
+  deviceTag?: string;       // Optional: Friendly name for the device.
+  userIdentifier?: string;  // Optional: User identifier.
+  apiKey?: string;          // Optional: API key override.
+}
+
+/**
+ * Response structure for a successful floating license checkout API call.
+ */
+export interface FloatingCheckoutResponse {
+  code: number;
+  message: string;
+  sessionId: string;
+  sessionSecret: string;
+  nextNonce: string;
+  expiresAt: string;
+  heartbeatInterval: number;
+  metadata?: Record<string, any>;
+  currentSessions?: number;
+  maxSessions?: number | null;
+  licenseeName?: string;
+  licenseeEmail?: string;
+}
+
+/**
+ * Parameters for the floating license heartbeat API endpoint.
+ */
+export interface FloatingHeartbeatParams {
+  productId: string;        // Required: The unique identifier of the product.
+  licenseKey: string;       // Required: The license key.
+  sessionId: string;        // Required: The unique 22-character session ID.
+  timestamp: string | number; // Required: The rotating nonce (nextNonce) received from the previous response.
+  signature: string;        // Required: HMAC-SHA256 signature generated using the sessionSecret over the payload 'sessionId:nonce'.
+  apiKey?: string;          // Optional: API key override.
+}
+
+/**
+ * Response structure for a successful floating license heartbeat API call.
+ */
+export interface FloatingHeartbeatResponse {
+  code: number;
+  message: string;
+  expiresAt: string;
+  nextNonce: string;
+}
+
+/**
+ * Parameters for the floating license checkin API endpoint.
+ */
+export interface FloatingCheckinParams {
+  productId: string;        // Required: The unique identifier of the product.
+  licenseKey: string;       // Required: The license key.
+  sessionId: string;        // Required: The unique 22-character session ID.
+  timestamp: string | number; // Required: The rotating nonce (nextNonce) received from the previous response.
+  signature: string;        // Required: HMAC-SHA256 signature generated using the sessionSecret over the payload 'sessionId:nonce'.
+  apiKey?: string;          // Optional: API key override.
+}
+
+/**
+ * Response structure for a successful floating license checkin API call.
+ */
+export interface FloatingCheckinResponse {
+  code: number;
+  message: string;
+}
