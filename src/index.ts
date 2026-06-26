@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { createHash, randomUUID, createHmac } from 'crypto';
+import { createHash, randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -484,6 +484,73 @@ export class KeyMint {
         code: -1,
         status: undefined
       };
+    }
+  }
+
+  /**
+   * Verifies a webhook payload signature received from Keymint.
+   * @param payload - The raw request body as string.
+   * @param header - The value of the "Keymint-Signature" header.
+   * @param secret - The webhook endpoint's signing secret.
+   * @param toleranceSeconds - Time tolerance in seconds to prevent replay attacks. Defaults to 300 (5 minutes).
+   * @returns true if signature is valid, false otherwise.
+   */
+  static verifyWebhookSignature(
+    payload: string,
+    header: string,
+    secret: string,
+    toleranceSeconds = 300
+  ): boolean {
+    if (!header || !secret) {
+      return false;
+    }
+
+    try {
+      // Parse header (e.g. t=1719374021,v1=signature)
+      let timestampStr = '';
+      let signature = '';
+      const parts = header.split(',');
+      for (const part of parts) {
+        const [k, v] = part.trim().split('=', 2);
+        if (k === 't') {
+          timestampStr = v;
+        } else if (k === 'v1') {
+          signature = v;
+        }
+      }
+
+      if (!timestampStr || !signature) {
+        return false;
+      }
+
+      // Check timestamp validity
+      const timestampInt = parseInt(timestampStr, 10);
+      if (isNaN(timestampInt)) {
+        return false;
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      if (Math.abs(now - timestampInt) > toleranceSeconds) {
+        return false;
+      }
+
+      // Verify HMAC signature
+      const expectedSignature = createHmac('sha256', secret)
+        .update(`${timestampStr}.${payload}`)
+        .digest('hex');
+
+      // Constant-time comparison to prevent timing attacks
+      const expectedBuf = Buffer.from(expectedSignature, 'hex');
+      const clientBuf = Buffer.from(signature, 'hex');
+
+      if (expectedBuf.length !== clientBuf.length) {
+        return false;
+      }
+
+      return timingSafeEqual(expectedBuf, clientBuf);
+    } catch (e) {
+      console.error('[verifyWebhookSignature] Verification failed:', e);
+      return false;
     }
   }
 }

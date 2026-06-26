@@ -1,0 +1,51 @@
+name: NodeJS SDK CI/CD
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  validate:
+    name: Build & Validate Node.js SDK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Verify Compilation
+        run: npm run build
+
+  publish:
+    name: Publish to npm
+    needs: validate
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # For Trusted Publishing OIDC provenance
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish Package
+        run: npm publish --provenance --access public
