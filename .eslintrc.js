@@ -8,7 +8,13 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
   ],
+  ignorePatterns: [
+    'dist/',
+    'node_modules/',
+  ],
   rules: {
-    // Add any custom rules here
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-var-requires': 'off',
   },
 };
