@@ -2,6 +2,10 @@
   "name": "keymint",
   "version": "1.2.0",
   "description": "SDK for interacting with the KeyMint API",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keymint-dev/Keymint-nodejs.git"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
