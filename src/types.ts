@@ -420,3 +420,10 @@ export interface FloatingCheckinResponse {
   code: number;
   message: string;
 }
+
+/**
+ * Custom request options for Keymint API requests (e.g. idempotency keys).
+ */
+export interface RequestOptions {
+  idempotencyKey?: string;
+}

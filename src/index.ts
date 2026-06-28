@@ -14,7 +14,8 @@ import {
   UpdateCustomerParams, UpdateCustomerResponse, DeleteCustomerParams, DeleteCustomerResponse,
   ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse,
   GetAllCustomersParams, FloatingCheckoutParams, FloatingCheckoutResponse,
-  FloatingHeartbeatParams, FloatingHeartbeatResponse, FloatingCheckinParams, FloatingCheckinResponse
+  FloatingHeartbeatParams, FloatingHeartbeatResponse, FloatingCheckinParams, FloatingCheckinResponse,
+  RequestOptions
 } from './types';
 
 // Export all types from types.ts to make them available to SDK users
@@ -235,11 +236,13 @@ export class KeyMint {
    * Generic method to handle POST requests.
    * @param endpoint - API endpoint
    * @param params - Request parameters
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the API response
    */
-  private async handleRequest<T>(endpoint: string, params: object): Promise<T> {
+  private async handleRequest<T>(endpoint: string, params: object, options?: RequestOptions): Promise<T> {
     try {
-      const response = await this.apiClient.post<T>(endpoint, params);
+      const headers = options?.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : undefined;
+      const response = await this.apiClient.post<T>(endpoint, params, { headers });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError<KeyMintApiError>);
@@ -265,11 +268,13 @@ export class KeyMint {
    * Generic method to handle DELETE requests.
    * @param endpoint - API endpoint
    * @param params - Query parameters
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the API response
    */
-  private async handleDeleteRequest<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  private async handleDeleteRequest<T>(endpoint: string, params?: Record<string, string>, options?: RequestOptions): Promise<T> {
     try {
-      const response = await this.apiClient.delete<T>(endpoint, { params });
+      const headers = options?.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : undefined;
+      const response = await this.apiClient.delete<T>(endpoint, { params, headers });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError<KeyMintApiError>);
@@ -280,11 +285,13 @@ export class KeyMint {
    * Generic method to handle PUT requests.
    * @param endpoint - API endpoint
    * @param params - Request parameters
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the API response
    */
-  private async handlePutRequest<T>(endpoint: string, params: object): Promise<T> {
+  private async handlePutRequest<T>(endpoint: string, params: object, options?: RequestOptions): Promise<T> {
     try {
-      const response = await this.apiClient.put<T>(endpoint, params);
+      const headers = options?.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : undefined;
+      const response = await this.apiClient.put<T>(endpoint, params, { headers });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError<KeyMintApiError>);
@@ -294,10 +301,11 @@ export class KeyMint {
   /**
    * Creates a new license key.
    * @param params - Parameters for creating the key.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the created key information or rejects with an error.
    */
-  async createKey(params: CreateKeyParams): Promise<CreateKeyResponse> {
-    return this.handleRequest<CreateKeyResponse>('/key', params);
+  async createKey(params: CreateKeyParams, options?: RequestOptions): Promise<CreateKeyResponse> {
+    return this.handleRequest<CreateKeyResponse>('/key', params, options);
   }
 
   /**
@@ -309,46 +317,51 @@ export class KeyMint {
    * If you perform an anonymous activation, you MUST cache the result locally.
    * 
    * @param params - Parameters for activating the key.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the activation status or rejects with an error.
    */
-  async activateKey(params: ActivateKeyParams): Promise<ActivateKeyResponse> {
-    return this.handleRequest<ActivateKeyResponse>('/key/activate', params);
+  async activateKey(params: ActivateKeyParams, options?: RequestOptions): Promise<ActivateKeyResponse> {
+    return this.handleRequest<ActivateKeyResponse>('/key/activate', params, options);
   }
 
   /**
    * Deactivates a device from a license key.
    * @param params - Parameters for deactivating the key.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the deactivation confirmation or rejects with an error.
    */
-  async deactivateKey(params: DeactivateKeyParams): Promise<DeactivateKeyResponse> {
-    return this.handleRequest<DeactivateKeyResponse>('/key/deactivate', params);
+  async deactivateKey(params: DeactivateKeyParams, options?: RequestOptions): Promise<DeactivateKeyResponse> {
+    return this.handleRequest<DeactivateKeyResponse>('/key/deactivate', params, options);
   }
 
   /**
    * Checks out a floating license seat.
    * @param params - Parameters for checking out the license.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the checkout response.
    */
-  async floatingCheckout(params: FloatingCheckoutParams): Promise<FloatingCheckoutResponse> {
-    return this.handleRequest<FloatingCheckoutResponse>('/key/checkout', params);
+  async floatingCheckout(params: FloatingCheckoutParams, options?: RequestOptions): Promise<FloatingCheckoutResponse> {
+    return this.handleRequest<FloatingCheckoutResponse>('/key/checkout', params, options);
   }
 
   /**
    * Sends a heartbeat to keep a floating license session alive.
    * @param params - Parameters for the heartbeat.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the heartbeat response.
    */
-  async floatingHeartbeat(params: FloatingHeartbeatParams): Promise<FloatingHeartbeatResponse> {
-    return this.handleRequest<FloatingHeartbeatResponse>('/key/heartbeat', params);
+  async floatingHeartbeat(params: FloatingHeartbeatParams, options?: RequestOptions): Promise<FloatingHeartbeatResponse> {
+    return this.handleRequest<FloatingHeartbeatResponse>('/key/heartbeat', params, options);
   }
 
   /**
    * Checks in a floating license session, releasing the seat.
    * @param params - Parameters for checking in the license.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the checkin response.
    */
-  async floatingCheckin(params: FloatingCheckinParams): Promise<FloatingCheckinResponse> {
-    return this.handleRequest<FloatingCheckinResponse>('/key/checkin', params);
+  async floatingCheckin(params: FloatingCheckinParams, options?: RequestOptions): Promise<FloatingCheckinResponse> {
+    return this.handleRequest<FloatingCheckinResponse>('/key/checkin', params, options);
   }
 
   /**
@@ -366,28 +379,31 @@ export class KeyMint {
   /**
    * Blocks a specific license key.
    * @param params - Parameters for blocking the key.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the block confirmation or rejects with an error.
    */
-  async blockKey(params: BlockKeyParams): Promise<BlockKeyResponse> {
-    return this.handleRequest<BlockKeyResponse>('/key/block', params);
+  async blockKey(params: BlockKeyParams, options?: RequestOptions): Promise<BlockKeyResponse> {
+    return this.handleRequest<BlockKeyResponse>('/key/block', params, options);
   }
 
   /**
    * Unblocks a previously blocked license key.
    * @param params - Parameters for unblocking the key.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the unblock confirmation or rejects with an error.
    */
-  async unblockKey(params: UnblockKeyParams): Promise<UnblockKeyResponse> {
-    return this.handleRequest<UnblockKeyResponse>('/key/unblock', params);
+  async unblockKey(params: UnblockKeyParams, options?: RequestOptions): Promise<UnblockKeyResponse> {
+    return this.handleRequest<UnblockKeyResponse>('/key/unblock', params, options);
   }
 
   /**
    * Creates a new customer.
    * @param params - Parameters for creating the customer.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the created customer information or rejects with an error.
    */
-  async createCustomer(params: CreateCustomerParams): Promise<CreateCustomerResponse> {
-    return this.handleRequest<CreateCustomerResponse>('/customer', params);
+  async createCustomer(params: CreateCustomerParams, options?: RequestOptions): Promise<CreateCustomerResponse> {
+    return this.handleRequest<CreateCustomerResponse>('/customer', params, options);
   }
 
   /**
@@ -413,32 +429,35 @@ export class KeyMint {
   /**
    * Updates an existing customer.
    * @param params - Parameters for updating the customer.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the updated customer information or rejects with an error.
    */
-  async updateCustomer(params: UpdateCustomerParams): Promise<UpdateCustomerResponse> {
-    return this.handlePutRequest<UpdateCustomerResponse>('/customer/by-id', params);
+  async updateCustomer(params: UpdateCustomerParams, options?: RequestOptions): Promise<UpdateCustomerResponse> {
+    return this.handlePutRequest<UpdateCustomerResponse>('/customer/by-id', params, options);
   }
 
   /**
    * Deletes a customer and all associated license keys permanently.
    * @param params - Parameters for deleting the customer.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the deletion confirmation or rejects with an error.
    */
-  async deleteCustomer(params: DeleteCustomerParams): Promise<DeleteCustomerResponse> {
+  async deleteCustomer(params: DeleteCustomerParams, options?: RequestOptions): Promise<DeleteCustomerResponse> {
     return this.handleDeleteRequest<DeleteCustomerResponse>('/customer/by-id', {
       customerId: params.customerId
-    });
+    }, options);
   }
 
   /**
    * Toggles the status of a customer (active/inactive).
    * @param params - Parameters for toggling the customer status.
+   * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the updated customer status or rejects with an error.
    */
-  async toggleCustomerStatus(params: ToggleCustomerStatusParams): Promise<ToggleCustomerStatusResponse> {
+  async toggleCustomerStatus(params: ToggleCustomerStatusParams, options?: RequestOptions): Promise<ToggleCustomerStatusResponse> {
     return this.handleRequest<ToggleCustomerStatusResponse>('/customer/disable', {
       customerId: params.customerId
-    });
+    }, options);
   }
 
   /**
