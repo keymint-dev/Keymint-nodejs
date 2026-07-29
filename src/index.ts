@@ -15,6 +15,7 @@ import {
   ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse,
   GetAllCustomersParams, FloatingCheckoutParams, FloatingCheckoutResponse,
   FloatingHeartbeatParams, FloatingHeartbeatResponse, FloatingCheckinParams, FloatingCheckinResponse,
+  UpdateKeyParams, UpdateKeyResponse, SignKeyParams, SignKeyResponse,
   RequestOptions
 } from './types';
 
@@ -299,6 +300,23 @@ export class KeyMint {
   }
 
   /**
+   * Generic method to handle PATCH requests.
+   * @param endpoint - API endpoint
+   * @param params - Request parameters
+   * @param options - Custom request options (e.g. idempotency keys)
+   * @returns A promise that resolves with the API response
+   */
+  private async handlePatchRequest<T>(endpoint: string, params: object, options?: RequestOptions): Promise<T> {
+    try {
+      const headers = options?.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : undefined;
+      const response = await this.apiClient.patch<T>(endpoint, params, { headers });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError<KeyMintApiError>);
+    }
+  }
+
+  /**
    * Creates a new license key.
    * @param params - Parameters for creating the key.
    * @param options - Custom request options (e.g. idempotency keys)
@@ -397,6 +415,27 @@ export class KeyMint {
   }
 
   /**
+   * Updates an existing license key.
+   * @param params - Parameters for updating the key (productId + licenseKey required, all other fields optional).
+   * @param options - Custom request options (e.g. idempotency keys)
+   * @returns A promise that resolves with the update confirmation or rejects with an error.
+   */
+  async updateKey(params: UpdateKeyParams, options?: RequestOptions): Promise<UpdateKeyResponse> {
+    return this.handlePatchRequest<UpdateKeyResponse>('/key', params, options);
+  }
+
+  /**
+   * Signs a license key for offline (air-gapped) validation.
+   * Requires admin API key scope and Standard plan.
+   * @param params - Parameters for signing (hostId is required).
+   * @param options - Custom request options (e.g. idempotency keys)
+   * @returns A promise that resolves with the signed license file or rejects with an error.
+   */
+  async signKey(params: SignKeyParams, options?: RequestOptions): Promise<SignKeyResponse> {
+    return this.handleRequest<SignKeyResponse>('/key/sign', params, options);
+  }
+
+  /**
    * Creates a new customer.
    * @param params - Parameters for creating the customer.
    * @param options - Custom request options (e.g. idempotency keys)
@@ -455,9 +494,7 @@ export class KeyMint {
    * @returns A promise that resolves with the updated customer status or rejects with an error.
    */
   async toggleCustomerStatus(params: ToggleCustomerStatusParams, options?: RequestOptions): Promise<ToggleCustomerStatusResponse> {
-    return this.handleRequest<ToggleCustomerStatusResponse>('/customer/disable', {
-      customerId: params.customerId
-    }, options);
+    return this.handleRequest<ToggleCustomerStatusResponse>(`/customer/disable?customerId=${params.customerId}`, {}, options);
   }
 
   /**

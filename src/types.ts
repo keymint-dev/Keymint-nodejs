@@ -8,6 +8,19 @@ export interface NewCustomer {
 }
 
 /**
+ * Key format options for custom license key shapes.
+ */
+export interface KeyFormat {
+  sections?: number;          // Optional: Number of sections (1-10)
+  sectionLength?: number;     // Optional: Length of each section (1-32)
+  separator?: string;         // Optional: Separator character (max 3 chars)
+  charset?: string;           // Optional: Custom character set (no whitespace)
+  prefix?: string;            // Optional: Prefix prepended to key (max 16 chars)
+  suffix?: string;            // Optional: Suffix appended to key (max 16 chars)
+  case?: 'upper' | 'lower' | 'mixed'; // Optional: Character case
+}
+
+/**
  * Parameters for the createKey API endpoint.
  */
 export interface CreateKeyParams {
@@ -19,6 +32,12 @@ export interface CreateKeyParams {
   metadata?: Record<string, any>; // Optional: Custom dictionary payload to attach to the license key.
   newCustomer?: NewCustomer;  // Optional: An object to create and associate a new customer with the key.
   allowedHosts?: string[];    // Optional: List of machine IDs authorized to use this license.
+  format?: KeyFormat;         // Optional: Custom key format (sections, separator, charset, etc.)
+  amountKeys?: string;        // Optional: Number of keys to generate at once (bulk creation)
+  licenseType?: 'node-locked' | 'floating'; // Optional: License type (defaults to 'node-locked')
+  maxConcurrentSessions?: number; // Optional: Max concurrent floating sessions
+  heartbeatInterval?: number;     // Optional: Floating heartbeat interval in seconds (min 60)
+  sessionLeaseDuration?: number;  // Optional: Floating session lease duration in seconds (min 300)
 }
 
 /**
@@ -46,6 +65,11 @@ export interface ActivateKeyParams {
   licenseKey: string; // Required: The license key to activate.
   hostId?: string;     // Optional: A unique identifier for the device.
   deviceTag?: string;  // Optional: A user-friendly name for the device.
+  licensee?: {         // Optional: Set customer name and email during activation
+    name: string;
+    email: string;
+  };
+  version?: string;    // Optional: Product version string (max 32 chars)
 }
 
 /**
@@ -266,16 +290,9 @@ export interface CustomerLicenseKey {
 
 /**
  * Response structure for a successful getCustomerWithKeys API call.
+ * Returns a flat array of license keys for the customer.
  */
-export interface GetCustomerWithKeysResponse {
-  action: string;
-  status: boolean;
-  data: {
-    customer: Customer;
-    licenseKeys: CustomerLicenseKey[];
-  };
-  code: number;
-}
+export type GetCustomerWithKeysResponse = CustomerLicenseKey[];
 
 /**
  * Parameters for the updateCustomer API endpoint.
@@ -284,7 +301,6 @@ export interface UpdateCustomerParams {
   customerId: string;  // Required: The customer ID
   name?: string;       // Optional: Updated customer name
   email?: string;      // Optional: Updated customer email
-  active?: boolean;    // Optional: Customer active status
 }
 
 /**
@@ -419,6 +435,54 @@ export interface FloatingCheckinParams {
 export interface FloatingCheckinResponse {
   code: number;
   message: string;
+}
+
+/**
+ * Parameters for the updateKey API endpoint (PATCH /api/key).
+ */
+export interface UpdateKeyParams {
+  productId: string;          // Required: The unique identifier of the product.
+  licenseKey: string;         // Required: The license key to update.
+  maxActivations?: string | number;  // Optional: New max activations count
+  expiryDate?: string;        // Optional: New expiration date in ISO 8601 format
+  customerId?: string;        // Optional: New customer ID to associate
+  newCustomer?: NewCustomer;  // Optional: Create and associate a new customer
+  metadata?: Record<string, any>; // Optional: Updated custom metadata
+  versionId?: string;         // Optional: Updated product version ID
+  allowedHosts?: string[];    // Optional: Updated list of authorized machine IDs
+  licenseType?: 'node-locked' | 'floating'; // Optional: Change license type
+  maxConcurrentSessions?: number; // Optional: Updated max concurrent sessions
+  heartbeatInterval?: number;     // Optional: Updated heartbeat interval (seconds, min 60)
+  sessionLeaseDuration?: number;  // Optional: Updated session lease duration (seconds, min 300)
+}
+
+/**
+ * Response structure for a successful updateKey API call.
+ */
+export interface UpdateKeyResponse {
+  code: number;
+  message: string;
+  affectedCount?: number;
+}
+
+/**
+ * Parameters for the signKey API endpoint (POST /api/key/sign).
+ * Offline signing — returns a signed license file for air-gapped validation.
+ * Requires admin scope and Standard plan.
+ */
+export interface SignKeyParams {
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to sign.
+  hostId: string;     // Required: The machine code to bind the offline license to.
+  ttl?: number;       // Optional: Time-to-live in seconds (min 60).
+}
+
+/**
+ * Response structure for a successful signKey API call.
+ */
+export interface SignKeyResponse {
+  code: number;
+  file: Record<string, any>; // Signed license file containing signedKey, keyId, publicKeyFingerprint
 }
 
 /**
