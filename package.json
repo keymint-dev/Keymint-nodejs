@@ -1,6 +1,6 @@
 {
   "name": "keymint",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "License key validation, activation, and management for Node.js. Supports node-locking, offline licensing, and hardware fingerprinting.",
   "repository": {
     "type": "git",
