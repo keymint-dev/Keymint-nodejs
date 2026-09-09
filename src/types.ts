@@ -45,7 +45,8 @@ export interface CreateKeyParams {
  */
 export interface CreateKeyResponse {
   code: number; // API response code (e.g., 0 for success)
-  key: string;  // The generated license key
+  key?: string;  // The generated license key
+  keys?: string[]; // Generated keys for bulk creation
 }
 
 /**
@@ -55,6 +56,7 @@ export interface KeyMintApiError {
   message: string; // Descriptive error message
   code: number;    // API specific error code
   status?: number;  // HTTP status code, optional
+  error?: { code?: string; message?: string; details?: unknown };
 }
 
 /**
@@ -103,6 +105,7 @@ export interface DeactivateKeyParams {
 export interface DeactivateKeyResponse {
   message: string; // Confirmation message (e.g., "Device deactivated")
   code: number;    // API response code (e.g., 0 for success)
+  devicesRemoved?: number;
 }
 
 /**
@@ -232,7 +235,7 @@ export interface Customer {
   active: boolean;
   createdAt: string;
   updatedAt: string;
-  createdBy: string;
+  createdBy?: string;
 }
 
 /**
@@ -325,10 +328,12 @@ export interface ToggleCustomerStatusParams {
  * Response structure for a successful toggleCustomerStatus API call.
  */
 export interface ToggleCustomerStatusResponse {
-  action: string;      // Action performed (e.g., "toggleActive")
+  action?: string;
   status: boolean;     // Success status
-  message: string;     // Status message (e.g., "Customer disabled")
-  code: number;        // API response code
+  message?: string;
+  code?: number;
+  customerName?: string;
+  active?: boolean;
 }
 
 /**
@@ -375,6 +380,8 @@ export interface FloatingCheckoutParams {
   deviceTag?: string;       // Optional: Friendly name for the device.
   userIdentifier?: string;  // Optional: User identifier.
   apiKey?: string;          // Optional: API key override.
+  timestamp?: string | number;
+  signature?: string;
 }
 
 /**
@@ -481,8 +488,7 @@ export interface SignKeyParams {
  * Response structure for a successful signKey API call.
  */
 export interface SignKeyResponse {
-  code: number;
-  file: Record<string, any>; // Signed license file containing signedKey, keyId, publicKeyFingerprint
+  file: string; // Serialized signed license file returned by the API
 }
 
 /**
