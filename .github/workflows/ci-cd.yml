@@ -4,8 +4,10 @@ on:
   pull_request:
     branches: [ main, master ]
   push:
+    branches: [ main, master ]
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -29,6 +31,29 @@ jobs:
 
       - name: Verify Compilation
         run: npm run build
+
+      - name: Run Contract Tests
+        run: npm test
+
+  live-api-validation:
+    name: Live API Validation
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - name: Run live API tests
+        env:
+          KEYMINT_TEST_ADMIN_API_KEY: ${{ secrets.KEYMINT_TEST_ADMIN_API_KEY }}
+          KEYMINT_TEST_READONLY_API_KEY: ${{ secrets.KEYMINT_TEST_READONLY_API_KEY }}
+          KEYMINT_TEST_CLIENT_API_KEY: ${{ secrets.KEYMINT_TEST_CLIENT_API_KEY }}
+          KEYMINT_TEST_PRODUCT_ID: ${{ vars.KEYMINT_TEST_PRODUCT_ID }}
+          KEYMINT_TEST_BASE_URL: https://api.keymint.dev
+        run: npm run test:live
 
   publish:
     name: Publish to npm
