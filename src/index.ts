@@ -256,9 +256,9 @@ export class KeyMint {
    * @param params - Query parameters
    * @returns A promise that resolves with the API response
    */
-  private async handleGetRequest<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+  private async handleGetRequest<T>(endpoint: string, params?: Record<string, any>, headers?: Record<string, string>): Promise<T> {
     try {
-      const response = await this.apiClient.get<T>(endpoint, { params });
+      const response = await this.apiClient.get<T>(endpoint, { params, headers });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError<KeyMintApiError>);
@@ -389,9 +389,8 @@ export class KeyMint {
    */
   async getKey(params: GetKeyParams): Promise<GetKeyResponse> {
     return this.handleGetRequest<GetKeyResponse>('/key', {
-      productId: params.productId,
-      licenseKey: params.licenseKey
-    });
+      productId: params.productId
+    }, { 'x-license-key': params.licenseKey });
   }
 
   /**
@@ -518,10 +517,15 @@ export class KeyMint {
       const responseData = axiosError.response.data;
       
       // The API returned a structured error message
-      if (typeof responseData === 'object' && responseData !== null && 'message' in responseData) { 
+      if (typeof responseData === 'object' && responseData !== null) {
+        const nested = 'error' in responseData && typeof responseData.error === 'object' && responseData.error !== null
+          ? responseData.error as { message?: string }
+          : undefined;
         return {
-          message: responseData.message || defaultApiErrorMessage,
-          code: typeof responseData.code === 'number' ? responseData.code : -1,
+          message: ('message' in responseData && typeof responseData.message === 'string' ? responseData.message : undefined)
+            || nested?.message
+            || defaultApiErrorMessage,
+          code: 'code' in responseData && typeof responseData.code === 'number' ? responseData.code : -1,
           status: axiosError.response.status
         };
       } else {
