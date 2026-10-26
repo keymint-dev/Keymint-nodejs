@@ -59,3 +59,59 @@ test('nested API errors preserve the actionable server message', async () => {
     );
   });
 });
+
+function jsonResponder(path, body) {
+  return (request, response) => {
+    assert.equal(request.method, 'POST');
+    assert.equal(request.url, path);
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify(body));
+  };
+}
+
+for (const expirationDate of ['2027-03-01T00:00:00.000Z', null]) {
+  test(`activateKey passes through expirationDate (${expirationDate})`, async () => {
+    await withServer(jsonResponder('/key/activate', {
+      code: 0, message: 'License valid', expirationDate, metadata: null
+    }), async baseUrl => {
+      const result = await new KeyMint('client_test', baseUrl).activateKey({
+        productId: 'product_123', licenseKey: 'license_123', hostId: 'host_123'
+      });
+      assert.equal(result.code, 0);
+      assert.ok('expirationDate' in result);
+      assert.equal(result.expirationDate, expirationDate);
+    });
+  });
+
+  test(`floatingCheckout passes through expirationDate separately from expiresAt (${expirationDate})`, async () => {
+    await withServer(jsonResponder('/key/checkout', {
+      code: 0,
+      message: 'Session checked out',
+      sessionId: 'session_1234567890123',
+      sessionSecret: 'secret',
+      nextNonce: 'nonce',
+      expiresAt: '2026-10-26T12:30:00.000Z',
+      heartbeatInterval: 300,
+      metadata: {},
+      expirationDate,
+      currentSessions: 1,
+      maxSessions: 5
+    }), async baseUrl => {
+      const result = await new KeyMint('client_test', baseUrl).floatingCheckout({
+        productId: 'product_123', licenseKey: 'license_123', hostId: 'host_123'
+      });
+      assert.equal(result.expiresAt, '2026-10-26T12:30:00.000Z');
+      assert.ok('expirationDate' in result);
+      assert.equal(result.expirationDate, expirationDate);
+    });
+  });
+}
+
+test('activateKey tolerates older servers that omit expirationDate', async () => {
+  await withServer(jsonResponder('/key/activate', { code: 0, message: 'License valid' }), async baseUrl => {
+    const result = await new KeyMint('client_test', baseUrl).activateKey({
+      productId: 'product_123', licenseKey: 'license_123'
+    });
+    assert.equal(result.expirationDate, undefined);
+  });
+});

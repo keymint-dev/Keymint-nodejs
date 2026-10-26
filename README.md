@@ -85,6 +85,27 @@ Keymint provides utilities to uniquely identify machines for node-locking:
 |-------------------------|--------------------------------------------------|
 | `verifyWebhookSignature`| Verifies the signature of a webhook request payload. |
 
+## License Expiry
+
+`activateKey` and `floatingCheckout` return `expirationDate`: when the license expires, as an ISO 8601 string, or `null` if it never expires. On `floatingCheckout` it is separate from `expiresAt`, which is the floating seat lease. The field is optional in the types because older API servers may omit it.
+
+```typescript
+const res = await sdk.activateKey({ productId, licenseKey, hostId });
+
+if (res.expirationDate) {
+  const daysLeft = Math.max(0, Math.ceil((new Date(res.expirationDate).getTime() - Date.now()) / 86_400_000));
+  console.log(`License expires on ${res.expirationDate} (${daysLeft} days left)`);
+} else if (res.expirationDate === null) {
+  console.log('License never expires');
+}
+
+// Store the last value you received (e.g. in your app's settings).
+// `undefined` means an older server didn't send the field, so keep the previous value.
+if (res.expirationDate !== undefined) saveLastExpirationDate(res.expirationDate);
+```
+
+Store the last `expirationDate` your app received. An expired license fails activation with the same generic error as an invalid key, so the stored date is what lets your app tell the user their license expired on that date instead of calling the key invalid.
+
 ## Idempotency
 
 All mutating SDK calls (such as creating keys, activations, customer management, etc.) support idempotency keys to safely retry requests in case of network drops. Pass a unique key (recommended: UUID v4) as the optional request options:

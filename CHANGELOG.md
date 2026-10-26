@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `expirationDate` on `ActivateKeyResponse` and `FloatingCheckoutResponse`: the license expiry as an ISO 8601 string, or `null` when the license never expires. Typed as optional (`expirationDate?: string | null`) for compatibility with older servers. On checkout it is separate from `expiresAt`, the floating seat lease.
+
 ## 1.5.0 - 2026-09-09
 
 ### Fixed
