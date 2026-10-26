@@ -419,11 +419,7 @@ export class KeyMint {
   }
 
   /**
-   * Permanently deletes a license key, along with its device activations, floating
-   * sessions and activation history, and frees its slot in the plan's license limit.
-   * This cannot be undone; use {@link blockKey} for a reversible block.
-   * Requires an admin API key or a key with the `license:delete` permission.
-   * The license key is sent in the JSON request body, never the URL.
+   * Permanently deletes a license key (use {@link blockKey} to stop it reversibly).
    * @param params - Parameters for deleting the key.
    * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the deletion confirmation or rejects with an error.
