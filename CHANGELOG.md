@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Security
+
+- Lockfile: `follow-redirects` 1.16.0 -> 1.16.1 (GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c), plus dev-only `brace-expansion` and `js-yaml` fixes. No `axios` release requires a fixed `follow-redirects` yet, so existing installs should run `npm update follow-redirects`.
+
 ## 1.7.0 - 2026-10-26
 
 ### Added
