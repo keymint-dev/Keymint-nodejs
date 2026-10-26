@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { KeyMint } = require('../dist/index.js');
+const { KeyMint, verifyOfflineLicense } = require('../dist/index.js');
 
 function required(name) {
   const value = process.env[name];
@@ -75,6 +75,20 @@ test('current license and customer workflows work end to end', async () => {
     const signed = await admin.signKey({ productId, licenseKey: nodeKey, hostId: nodeHost, ttl: 300 });
     assert.equal(typeof signed.file, 'string');
     assert.match(signed.file, /signedKey/);
+    const publicKey = process.env.KEYMINT_TEST_PUBLIC_KEY;
+    if (publicKey) {
+      const offline = verifyOfflineLicense(signed.file, { publicKeys: [publicKey], productId, machineCode: nodeHost });
+      assert.equal(offline.licenseKey, nodeKey);
+      assert.equal(offline.productId, productId);
+      assert.equal(offline.machineCode, nodeHost);
+      assert.ok(offline.expiresAt.getTime() > Date.now());
+      assert.throws(
+        () => verifyOfflineLicense(signed.file, { publicKeys: [publicKey], productId: `${productId}-other`, machineCode: nodeHost }),
+        { code: 'wrong_product' }
+      );
+    } else {
+      console.log('KEYMINT_TEST_PUBLIC_KEY not set; skipping offline license verification');
+    }
 
     const customer = await admin.createCustomer({ name: 'Node SDK CI', email: `node-ci-${runId}@example.com` });
     customerId = customer.data.id;
