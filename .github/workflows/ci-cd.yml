@@ -52,6 +52,7 @@ jobs:
           KEYMINT_TEST_READONLY_API_KEY: ${{ secrets.KEYMINT_TEST_READONLY_API_KEY }}
           KEYMINT_TEST_CLIENT_API_KEY: ${{ secrets.KEYMINT_TEST_CLIENT_API_KEY }}
           KEYMINT_TEST_PRODUCT_ID: ${{ vars.KEYMINT_TEST_PRODUCT_ID }}
+          KEYMINT_TEST_PUBLIC_KEY: ${{ vars.KEYMINT_TEST_PUBLIC_KEY }}
           KEYMINT_TEST_BASE_URL: https://api.keymint.dev
         run: npm run test:live
 

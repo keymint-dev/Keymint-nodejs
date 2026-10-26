@@ -18,9 +18,12 @@ import {
   UpdateKeyParams, UpdateKeyResponse, SignKeyParams, SignKeyResponse,
   RequestOptions
 } from './types';
+import { verifyOfflineLicense, OfflineVerifyOptions, OfflineLicense } from './offline';
 
 // Export all types from types.ts to make them available to SDK users
 export * from './types';
+export { verifyOfflineLicense, OfflineLicenseError } from './offline';
+export type { OfflineVerifyOptions, OfflineLicense, OfflineLicenseErrorCode } from './offline';
 
 export class KeyMint {
 
@@ -545,6 +548,17 @@ export class KeyMint {
         status: undefined
       };
     }
+  }
+
+  /**
+   * Verifies an offline license locally. Same as the standalone {@link verifyOfflineLicense}.
+   * @param license - The `.lic` file contents or the bare token.
+   * @param options - Trusted public keys, the expected product ID and machine code.
+   * @returns The verified license.
+   * @throws {OfflineLicenseError} When the license fails verification.
+   */
+  static verifyOfflineLicense(license: string, options: OfflineVerifyOptions): OfflineLicense {
+    return verifyOfflineLicense(license, options);
   }
 
   /**
