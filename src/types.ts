@@ -208,6 +208,22 @@ export interface UnblockKeyResponse {
 }
 
 /**
+ * Parameters for the deleteKey API endpoint.
+ */
+export interface DeleteKeyParams {
+  productId: string;  // Required: The unique identifier of the product.
+  licenseKey: string; // Required: The license key to delete permanently.
+}
+
+/**
+ * Response structure for a successful deleteKey API call.
+ */
+export interface DeleteKeyResponse {
+  message: string; // Confirmation message (e.g., "Key deleted")
+  code: number;    // API response code (e.g., 0 for success)
+}
+
+/**
  * Parameters for the createCustomer API endpoint.
  */
 export interface CreateCustomerParams {

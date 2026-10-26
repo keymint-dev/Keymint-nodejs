@@ -9,7 +9,8 @@ import {
   ActivateKeyParams, ActivateKeyResponse, DeactivateKeyParams, 
   DeactivateKeyResponse, GetKeyParams, GetKeyResponse, 
   BlockKeyParams, BlockKeyResponse, UnblockKeyParams, 
-  UnblockKeyResponse, CreateCustomerParams, CreateCustomerResponse,
+  UnblockKeyResponse, DeleteKeyParams, DeleteKeyResponse,
+  CreateCustomerParams, CreateCustomerResponse,
   GetAllCustomersResponse, GetCustomerWithKeysParams, GetCustomerWithKeysResponse,
   UpdateCustomerParams, UpdateCustomerResponse, DeleteCustomerParams, DeleteCustomerResponse,
   ToggleCustomerStatusParams, ToggleCustomerStatusResponse, GetCustomerByIdParams, GetCustomerByIdResponse,
@@ -273,12 +274,13 @@ export class KeyMint {
    * @param endpoint - API endpoint
    * @param params - Query parameters
    * @param options - Custom request options (e.g. idempotency keys)
+   * @param body - Optional JSON request body
    * @returns A promise that resolves with the API response
    */
-  private async handleDeleteRequest<T>(endpoint: string, params?: Record<string, string>, options?: RequestOptions): Promise<T> {
+  private async handleDeleteRequest<T>(endpoint: string, params?: Record<string, string>, options?: RequestOptions, body?: object): Promise<T> {
     try {
       const headers = options?.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : undefined;
-      const response = await this.apiClient.delete<T>(endpoint, { params, headers });
+      const response = await this.apiClient.delete<T>(endpoint, { params, headers, data: body });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError<KeyMintApiError>);
@@ -414,6 +416,23 @@ export class KeyMint {
    */
   async unblockKey(params: UnblockKeyParams, options?: RequestOptions): Promise<UnblockKeyResponse> {
     return this.handleRequest<UnblockKeyResponse>('/key/unblock', params, options);
+  }
+
+  /**
+   * Permanently deletes a license key, along with its device activations, floating
+   * sessions and activation history, and frees its slot in the plan's license limit.
+   * This cannot be undone; use {@link blockKey} for a reversible block.
+   * Requires an admin API key or a key with the `license:delete` permission.
+   * The license key is sent in the JSON request body, never the URL.
+   * @param params - Parameters for deleting the key.
+   * @param options - Custom request options (e.g. idempotency keys)
+   * @returns A promise that resolves with the deletion confirmation or rejects with an error.
+   */
+  async deleteKey(params: DeleteKeyParams, options?: RequestOptions): Promise<DeleteKeyResponse> {
+    return this.handleDeleteRequest<DeleteKeyResponse>('/key', undefined, options, {
+      productId: params.productId,
+      licenseKey: params.licenseKey
+    });
   }
 
   /**

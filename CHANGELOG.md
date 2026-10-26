@@ -6,6 +6,7 @@
 
 - `verifyOfflineLicense(license, options)` (also `KeyMint.verifyOfflineLicense`): verifies a signed offline license (`.lic` file or bare token) locally with `node:crypto`, no new dependencies. Requires the trusted public keys, `productId` and `machineCode`; optional `now` and `clockSkewSeconds` (default 60, max 3600). Returns `OfflineLicense`; failures throw `OfflineLicenseError` with a `code` (`malformed`, `unsupported_algorithm`, `unknown_key`, `bad_signature`, `wrong_type`, `wrong_product`, `wrong_machine`, `expired`). Invalid options throw `TypeError`/`RangeError`.
 - Tests against the shared Keymint offline-license test vectors (34 cases).
+- `deleteKey({ productId, licenseKey })`: permanently deletes a license key via `DELETE /key` (JSON body; the key is never put in the URL) and frees its plan slot. Returns `DeleteKeyResponse` (`{ message, code }`); an unknown key rejects with status 404. Needs an admin API key or the `license:delete` permission. Unlike `blockKey`, it cannot be undone.
 
 ## 1.6.0 - 2026-10-26
 

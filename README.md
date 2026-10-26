@@ -60,8 +60,9 @@ Keymint provides utilities to uniquely identify machines for node-locking:
 | `deactivateKey` | Deactivates a device from a license key.        |
 | `getKey`        | Retrieves detailed information about a key.     |
 | `updateKey`     | Updates an existing license key.                |
-| `blockKey`      | Blocks a license key.                           |
+| `blockKey`      | Blocks a license key. Reversible with `unblockKey`; a blocked key still counts toward your plan's license limit. |
 | `unblockKey`    | Unblocks a previously blocked license key.      |
+| `deleteKey`     | Permanently deletes a license key with its activations and sessions, and frees its plan slot. Cannot be undone. Needs an admin API key or the `license:delete` permission. |
 | `signKey`       | Signs a key for offline validation using an admin API key.|
 | `floatingCheckout` | Checks out a floating license seat.           |
 | `floatingHeartbeat`| Sends a heartbeat to keep a session alive.    |
