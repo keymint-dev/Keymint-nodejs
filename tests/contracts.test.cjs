@@ -115,3 +115,49 @@ test('activateKey tolerates older servers that omit expirationDate', async () =>
     assert.equal(result.expirationDate, undefined);
   });
 });
+
+function readJson(request) {
+  return new Promise((resolve, reject) => {
+    let raw = '';
+    request.on('data', chunk => { raw += chunk; });
+    request.on('end', () => {
+      try { resolve({ raw, body: JSON.parse(raw) }); } catch (err) { reject(err); }
+    });
+    request.on('error', reject);
+  });
+}
+
+test('deleteKey sends DELETE /key with the license in the JSON body, never the URL', async () => {
+  const licenseKey = 'secret/license+key';
+  await withServer(async (request, response) => {
+    assert.equal(request.method, 'DELETE');
+    assert.equal(request.url, '/key');
+    assert.ok(!decodeURIComponent(request.url).includes(licenseKey));
+    assert.equal(request.headers.authorization, 'Bearer admin_test');
+    assert.match(request.headers['content-type'], /^application\/json/);
+    const { body } = await readJson(request);
+    assert.deepEqual(body, { productId: 'product_123', licenseKey });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ message: 'Key deleted', code: 0 }));
+  }, async baseUrl => {
+    const result = await new KeyMint('admin_test', baseUrl).deleteKey({ productId: 'product_123', licenseKey });
+    assert.deepEqual(result, { message: 'Key deleted', code: 0 });
+  });
+});
+
+test('deleteKey rejects an unknown key with the SDK error shape', async () => {
+  await withServer((request, response) => {
+    request.resume();
+    response.statusCode = 404;
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ message: 'Invalid license key', code: 1 }));
+  }, async baseUrl => {
+    await assert.rejects(
+      () => new KeyMint('admin_test', baseUrl).deleteKey({ productId: 'product_123', licenseKey: 'missing' }),
+      error => {
+        assert.deepEqual(error, { message: 'Invalid license key', code: 1, status: 404 });
+        return true;
+      }
+    );
+  });
+});

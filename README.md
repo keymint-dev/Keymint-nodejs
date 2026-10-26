@@ -62,6 +62,7 @@ Keymint provides utilities to uniquely identify machines for node-locking:
 | `updateKey`     | Updates an existing license key.                |
 | `blockKey`      | Blocks a license key.                           |
 | `unblockKey`    | Unblocks a previously blocked license key.      |
+| `deleteKey`     | Permanently deletes a license key (use `blockKey` to stop it reversibly). |
 | `signKey`       | Signs a key for offline validation using an admin API key.|
 | `floatingCheckout` | Checks out a floating license seat.           |
 | `floatingHeartbeat`| Sends a heartbeat to keep a session alive.    |
@@ -78,7 +79,7 @@ Keymint provides utilities to uniquely identify machines for node-locking:
 | `getCustomerWithKeys` | Gets a customer along with their license keys.   |
 | `updateCustomer`      | Updates an existing customer's information.      |
 | `toggleCustomerStatus`| Toggles a customer's active status.              |
-| `deleteCustomer`      | Permanently deletes a customer and their keys.   |
+| `deleteCustomer`      | Deletes a customer. Their license keys are kept; use `deleteKey` to remove them. |
 
 ### Webhook Verification
 

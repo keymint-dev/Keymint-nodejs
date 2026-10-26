@@ -118,9 +118,20 @@ test('current license and customer workflows work end to end', async () => {
     assert.equal((await live(() => admin.toggleCustomerStatus({ customerId }))).status, true);
     assert.equal((await live(() => admin.deleteCustomer({ customerId }))).status, true);
     customerId = undefined;
+
+    const deleted = await live(() => admin.deleteKey({ productId, licenseKey: nodeKey }));
+    assert.equal(deleted.code, 0);
+    const deletedKey = nodeKey;
+    nodeKey = undefined;
+    await assert.rejects(
+      () => live(() => readOnly.getKey({ productId, licenseKey: deletedKey })),
+      error => error.status >= 400 && error.status < 500 && error.status !== 429
+    );
   } finally {
+    // Delete (not just block) what this run created so the shared test workspace
+    // does not fill up its license limit.
     if (customerId) await live(() => admin.deleteCustomer({ customerId })).catch(() => {});
-    if (nodeKey) await live(() => admin.blockKey({ productId, licenseKey: nodeKey })).catch(() => {});
-    if (floatingKey) await live(() => admin.blockKey({ productId, licenseKey: floatingKey })).catch(() => {});
+    if (nodeKey) await live(() => admin.deleteKey({ productId, licenseKey: nodeKey })).catch(() => {});
+    if (floatingKey) await live(() => admin.deleteKey({ productId, licenseKey: floatingKey })).catch(() => {});
   }
 });
