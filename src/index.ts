@@ -493,7 +493,7 @@ export class KeyMint {
   }
 
   /**
-   * Deletes a customer and all associated license keys permanently.
+   * Deletes a customer. Their license keys are kept; use {@link deleteKey} to remove them.
    * @param params - Parameters for deleting the customer.
    * @param options - Custom request options (e.g. idempotency keys)
    * @returns A promise that resolves with the deletion confirmation or rejects with an error.
