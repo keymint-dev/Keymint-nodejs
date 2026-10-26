@@ -82,6 +82,11 @@ export interface ActivateKeyResponse {
   message: string;          // Activation status message (e.g., "License valid")
   licenseeName?: string;    // Optional: Name of the licensee (updated field name)
   licenseeEmail?: string;   // Optional: Email of the licensee (updated field name)
+  /**
+   * When the license expires, as an ISO 8601 date string, or `null` if it never expires.
+   * Optional because older API servers may omit it.
+   */
+  expirationDate?: string | null;
   metadata?: Record<string, any> | null; // Optional: Custom dictionary attached to the license key.
   versionId?: string | null;       // Optional: Associated product version ID.
   version?: {               // Optional: Detailed product version information.
@@ -393,9 +398,14 @@ export interface FloatingCheckoutResponse {
   sessionId: string;
   sessionSecret: string;
   nextNonce: string;
-  expiresAt: string;
+  expiresAt: string;        // Floating seat lease expiry (not the license expiry).
   heartbeatInterval: number;
   metadata?: Record<string, any>;
+  /**
+   * When the license itself expires, as an ISO 8601 date string, or `null` if it never expires.
+   * Separate from `expiresAt`, which is the floating seat lease. Optional because older API servers may omit it.
+   */
+  expirationDate?: string | null;
   currentSessions?: number;
   maxSessions?: number | null;
   licenseeName?: string;
