@@ -544,6 +544,7 @@ export class KeyMint {
             || nested?.message
             || defaultApiErrorMessage,
           code: 'code' in responseData && typeof responseData.code === 'number' ? responseData.code : -1,
+          ...('errorCode' in responseData && typeof responseData.errorCode === 'string' ? { errorCode: responseData.errorCode } : {}),
           status: axiosError.response.status
         };
       } else {

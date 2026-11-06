@@ -55,6 +55,7 @@ export interface CreateKeyResponse {
 export interface KeyMintApiError {
   message: string; // Descriptive error message
   code: number;    // API specific error code
+  errorCode?: string; // Stable string error code (e.g. "license_not_found"); branch on this, not on message
   status?: number;  // HTTP status code, optional
   error?: { code?: string; message?: string; details?: unknown };
 }

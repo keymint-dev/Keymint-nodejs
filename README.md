@@ -169,6 +169,37 @@ Error messages never contain the license key. Invalid options (no public keys, a
 
 **Key rotation.** `publicKeys` accepts several PEMs, so you can ship the old and new keys side by side during a rotation.
 
+## Error Handling
+
+SDK methods reject with a `KeyMintApiError` object: `{ message, code, errorCode?, status? }`. Branch on `errorCode`, a stable string such as `license_invalid_or_forbidden` or `rate_limited`, not on `message`, which is written for people and may be reworded. See the [error code reference](https://keymint.dev/docs/api-reference/error-codes) for the full list.
+
+```typescript
+import { KeyMint, KeyMintApiError } from 'keymint';
+
+try {
+  const res = await sdk.activateKey({ productId, licenseKey, hostId });
+  console.log('Activated:', res.message);
+} catch (err) {
+  const error = err as KeyMintApiError;
+  switch (error.errorCode) {
+    case 'license_invalid_or_forbidden':
+      // Rejected: ask the user to re-enter the key or contact support.
+      break;
+    case 'activation_limit_reached':
+      // Ask the user to deactivate another device.
+      break;
+    case 'rate_limited':
+    case 'service_unavailable':
+      // No answer yet: keep the last known state and retry later.
+      break;
+    default:
+      console.error(`Keymint error ${error.errorCode ?? error.code} (HTTP ${error.status}): ${error.message}`);
+  }
+}
+```
+
+`errorCode` is absent when the response has none, for example a non-JSON body from a proxy or a network failure, where `code` is `-1`. The numeric `code` is unchanged.
+
 ## Idempotency
 
 All mutating SDK calls (such as creating keys, activations, customer management, etc.) support idempotency keys to safely retry requests in case of network drops. Pass a unique key (recommended: UUID v4) as the optional request options:
