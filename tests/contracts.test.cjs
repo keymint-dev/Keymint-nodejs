@@ -49,13 +49,14 @@ test('nested API errors preserve the actionable server message', async () => {
     response.setHeader('content-type', 'application/json');
     response.end(JSON.stringify({
       success: false,
-      error: { code: 'CUSTOMER_EMAIL_EXISTS', message: 'Customer email already exists in team' },
-      code: 1
+      error: { code: 'CUSTOMER_EMAIL_EXISTS', message: 'Customer email already exists in workspace' },
+      code: 2,
+      errorCode: 'conflict'
     }));
   }, async baseUrl => {
     await assert.rejects(
       () => new KeyMint('admin_test', baseUrl).createKey({ productId: 'product_123' }),
-      error => error.message === 'Customer email already exists in team' && error.code === 1
+      error => error.message === 'Customer email already exists in workspace' && error.code === 2 && error.errorCode === 'conflict'
     );
   });
 });
@@ -156,6 +157,61 @@ test('deleteKey rejects an unknown key with the SDK error shape', async () => {
       () => new KeyMint('admin_test', baseUrl).deleteKey({ productId: 'product_123', licenseKey: 'missing' }),
       error => {
         assert.deepEqual(error, { message: 'Invalid license key', code: 1, status: 404 });
+        return true;
+      }
+    );
+  });
+});
+
+function errorResponder(status, contentType, body) {
+  return (request, response) => {
+    request.resume();
+    response.statusCode = status;
+    response.setHeader('content-type', contentType);
+    response.end(body);
+  };
+}
+
+test('API errors expose errorCode when the response has one', async () => {
+  await withServer(errorResponder(401, 'application/json', JSON.stringify({
+    message: 'Invalid license key or insufficient permissions', code: 1, errorCode: 'license_invalid_or_forbidden'
+  })), async baseUrl => {
+    await assert.rejects(
+      () => new KeyMint('client_test', baseUrl).activateKey({ productId: 'product_123', licenseKey: 'license_123' }),
+      error => {
+        assert.deepEqual(error, {
+          message: 'Invalid license key or insufficient permissions',
+          code: 1,
+          errorCode: 'license_invalid_or_forbidden',
+          status: 401
+        });
+        return true;
+      }
+    );
+  });
+});
+
+test('API errors without errorCode keep the previous shape', async () => {
+  await withServer(errorResponder(429, 'application/json', JSON.stringify({
+    message: 'Too many requests', code: 3
+  })), async baseUrl => {
+    await assert.rejects(
+      () => new KeyMint('client_test', baseUrl).activateKey({ productId: 'product_123', licenseKey: 'license_123' }),
+      error => {
+        assert.deepEqual(error, { message: 'Too many requests', code: 3, status: 429 });
+        assert.equal('errorCode' in error, false);
+        return true;
+      }
+    );
+  });
+});
+
+test('non-JSON API errors have no errorCode', async () => {
+  await withServer(errorResponder(502, 'text/html', '<html>Bad Gateway</html>'), async baseUrl => {
+    await assert.rejects(
+      () => new KeyMint('client_test', baseUrl).activateKey({ productId: 'product_123', licenseKey: 'license_123' }),
+      error => {
+        assert.deepEqual(error, { message: 'An API error occurred during the request.', code: -1, status: 502 });
         return true;
       }
     );
