@@ -66,7 +66,7 @@ export class KeyMint {
   }
 
   /**
-   * Returns a guaranteed-unique, guaranteed-stable installation identifier.
+   * Returns a unique installation identifier that stays stable once saved.
    * On first call, it generates a UUIDv4 seeded with whatever hardware info
    * is available and persists it to disk. Every subsequent call returns the
    * same value — even across reboots, app updates, and hardware upgrades.
@@ -74,10 +74,15 @@ export class KeyMint {
    * This is the **recommended** value to pass as `hostId` when activating
    * a license key.
    *
+   * If the file cannot be written (e.g. a read-only filesystem such as
+   * Vercel or Lambda), the write error is swallowed and the freshly generated
+   * ID is returned without being saved, so the next call returns a different
+   * ID. Pass a writable `storagePath` in those environments.
+   *
    * @param storagePath - Optional custom path for the persistence file.
    *   Defaults to `~/.keymint/installation-id`.
    * @returns A SHA-256 hashed 64-character hex string.
-   * @throws If the file cannot be read or written (e.g. read-only filesystem).
+   * @throws If an existing file cannot be read (e.g. a permissions error).
    */
   static getOrCreateInstallationId(storagePath?: string): string {
     const filePath = storagePath || join(homedir(), '.keymint', 'installation-id');
@@ -360,7 +365,7 @@ export class KeyMint {
   /**
    * Checks out a floating license seat.
    * @param params - Parameters for checking out the license.
-   * @param options - Custom request options (e.g. idempotency keys)
+   * @param options - Custom request options. The floating endpoints ignore `Idempotency-Key`.
    * @returns A promise that resolves with the checkout response.
    */
   async floatingCheckout(params: FloatingCheckoutParams, options?: RequestOptions): Promise<FloatingCheckoutResponse> {
@@ -370,7 +375,7 @@ export class KeyMint {
   /**
    * Sends a heartbeat to keep a floating license session alive.
    * @param params - Parameters for the heartbeat.
-   * @param options - Custom request options (e.g. idempotency keys)
+   * @param options - Custom request options. The floating endpoints ignore `Idempotency-Key`.
    * @returns A promise that resolves with the heartbeat response.
    */
   async floatingHeartbeat(params: FloatingHeartbeatParams, options?: RequestOptions): Promise<FloatingHeartbeatResponse> {
@@ -380,7 +385,7 @@ export class KeyMint {
   /**
    * Checks in a floating license session, releasing the seat.
    * @param params - Parameters for checking in the license.
-   * @param options - Custom request options (e.g. idempotency keys)
+   * @param options - Custom request options. The floating endpoints ignore `Idempotency-Key`.
    * @returns A promise that resolves with the checkin response.
    */
   async floatingCheckin(params: FloatingCheckinParams, options?: RequestOptions): Promise<FloatingCheckinResponse> {
