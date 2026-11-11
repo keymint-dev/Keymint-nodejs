@@ -261,3 +261,33 @@ test('createCustomer sends a customer without an email', async () => {
     assert.equal(result.status, true);
   });
 });
+
+test('createKey sends maxActivations: null (unlimited)', async () => {
+  await withServer(async (request, response) => {
+    assert.equal(request.method, 'POST');
+    assert.equal(request.url, '/key');
+    const { raw, body } = await readJson(request);
+    assert.match(raw, /"maxActivations":null/);
+    assert.deepEqual(body, { productId: 'product_123', maxActivations: null });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ code: 0, key: 'license_123' }));
+  }, async baseUrl => {
+    await new KeyMint('admin_test', baseUrl).createKey({ productId: 'product_123', maxActivations: null });
+  });
+});
+
+test('updateKey sends maxActivations: null (unlimited)', async () => {
+  await withServer(async (request, response) => {
+    assert.equal(request.method, 'PATCH');
+    assert.equal(request.url, '/key');
+    const { raw, body } = await readJson(request);
+    assert.match(raw, /"maxActivations":null/);
+    assert.deepEqual(body, { productId: 'product_123', licenseKey: 'license_123', maxActivations: null });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ message: 'Key updated', code: 0 }));
+  }, async baseUrl => {
+    await new KeyMint('admin_test', baseUrl).updateKey({
+      productId: 'product_123', licenseKey: 'license_123', maxActivations: null
+    });
+  });
+});

@@ -25,7 +25,7 @@ export interface KeyFormat {
  */
 export interface CreateKeyParams {
   productId: string;          // Required: The unique identifier of the product.
-  maxActivations?: string;    // Optional: The maximum number of times the key can be activated.
+  maxActivations?: number | string | null; // Optional: A whole number 0-1,000,000 (number or digit string) or "unlimited". Omitted or null means unlimited.
   expiryDate?: string;        // Optional: The expiration date of the key in ISO 8601 format.
   customerId?: string;        // Optional: The ID of an existing customer to associate with the key.
   versionId?: string;         // Optional: The ID of a specific product version to associate with the key.
@@ -477,7 +477,7 @@ export interface FloatingCheckinResponse {
 export interface UpdateKeyParams {
   productId: string;          // Required: The unique identifier of the product.
   licenseKey: string;         // Required: The license key to update.
-  maxActivations?: string | number;  // Optional: New max activations count
+  maxActivations?: number | string | null; // Optional: A whole number 0-1,000,000 (number or digit string) or "unlimited". null or "unlimited" means unlimited; omit it to keep the current limit.
   expiryDate?: string | null; // Optional: New expiration date in ISO 8601 format. `null` (or `""`) removes the expiry; omit it to keep the current one.
   customerId?: string;        // Optional: New customer ID to associate
   newCustomer?: NewCustomer;  // Optional: Create and associate a new customer
