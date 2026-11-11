@@ -1,10 +1,18 @@
 # Changelog
 
-## Unreleased
+## 1.8.0 - 2026-11-11
 
 ### Added
 
 - `KeyMintApiError.errorCode`: the stable string error code the API now sends with every error (for example `license_invalid_or_forbidden`, `rate_limited`). Branch on it instead of `message`. Absent when the response has none; existing fields are unchanged.
+
+- `updateKey`: `expiryDate` accepts `null` (or `""`) to remove a license's expiry; omitting it keeps the current one. `null` is sent as-is in the request body.
+- `maxActivations` on `createKey` and `updateKey` accepts a whole number 0–1,000,000 (number or digit string), `"unlimited"` or `null` (unlimited), matching the API.
+
+### Fixed
+
+- `createCustomer`: `email` is optional, as in the API (`name` is required, 3–255 characters).
+- Docs: methods reject with `KeyMintApiError` (branch on `errorCode`); `floatingCheckout`, `floatingHeartbeat` and `floatingCheckin` ignore `Idempotency-Key`, so nothing is replayed for them; `getOrCreateInstallationId` returns an unsaved ID when it can't write its file.
 
 ### Security
 
