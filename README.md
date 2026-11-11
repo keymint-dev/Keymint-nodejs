@@ -5,7 +5,7 @@ A professional, production-ready SDK for integrating with the Keymint API in Nod
 ## Features
 - **Async/await**: All API calls are asynchronous.
 - **TypeScript-first**: Strongly typed request and response models for all endpoints.
-- **Consistent error handling**: All API errors are returned as structured objects.
+- **Consistent error handling**: Methods reject with a structured `KeyMintApiError` (`{ message, code, errorCode?, status? }`); branch on `errorCode`. See [Error Handling](#error-handling).
 - **Machine Identity**: Built-in utilities for hardware fingerprinting and stable installation IDs.
 
 ## Installation
@@ -202,7 +202,7 @@ try {
 
 ## Idempotency
 
-All mutating SDK calls (such as creating keys, activations, customer management, etc.) support idempotency keys to safely retry requests in case of network drops. Pass a unique key (recommended: UUID v4) as the optional request options:
+Mutating SDK calls (such as creating keys, activations, customer management, etc.) support idempotency keys to safely retry requests in case of network drops. Pass a unique key (recommended: UUID v4) as the optional request options:
 
 ```typescript
 const result = await sdk.createKey({ 
@@ -212,7 +212,9 @@ const result = await sdk.createKey({
 });
 ```
 
-Use a fresh random UUID for each operation and reuse it only to retry that same operation. Never derive it from the license key or host ID: a replay returns the original response, including floating-session secrets.
+Use a fresh random UUID for each operation and reuse it only to retry that same operation. Never derive it from the license key or host ID: a replay returns the original response.
+
+The floating endpoints (`floatingCheckout`, `floatingHeartbeat`, `floatingCheckin`) ignore `Idempotency-Key`: each call is processed as a new request, and no response is replayed.
 
 ## License
 MIT

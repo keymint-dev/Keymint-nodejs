@@ -217,3 +217,47 @@ test('non-JSON API errors have no errorCode', async () => {
     );
   });
 });
+
+test('updateKey sends expiryDate: null to remove the expiry', async () => {
+  await withServer(async (request, response) => {
+    assert.equal(request.method, 'PATCH');
+    assert.equal(request.url, '/key');
+    const { raw, body } = await readJson(request);
+    assert.match(raw, /"expiryDate":null/);
+    assert.deepEqual(body, { productId: 'product_123', licenseKey: 'license_123', expiryDate: null });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ message: 'Key updated', code: 0 }));
+  }, async baseUrl => {
+    const result = await new KeyMint('admin_test', baseUrl).updateKey({
+      productId: 'product_123', licenseKey: 'license_123', expiryDate: null
+    });
+    assert.deepEqual(result, { message: 'Key updated', code: 0 });
+  });
+});
+
+test('updateKey omits expiryDate when it is not set, keeping the current expiry', async () => {
+  await withServer(async (request, response) => {
+    const { body } = await readJson(request);
+    assert.equal('expiryDate' in body, false);
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ message: 'Key updated', code: 0 }));
+  }, async baseUrl => {
+    await new KeyMint('admin_test', baseUrl).updateKey({
+      productId: 'product_123', licenseKey: 'license_123', maxActivations: 5
+    });
+  });
+});
+
+test('createCustomer sends a customer without an email', async () => {
+  await withServer(async (request, response) => {
+    assert.equal(request.method, 'POST');
+    assert.equal(request.url, '/customer');
+    const { body } = await readJson(request);
+    assert.deepEqual(body, { name: 'Ada Lovelace' });
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ action: 'createCustomer', status: true, code: 0, message: 'Customer created' }));
+  }, async baseUrl => {
+    const result = await new KeyMint('admin_test', baseUrl).createCustomer({ name: 'Ada Lovelace' });
+    assert.equal(result.status, true);
+  });
+});

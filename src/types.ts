@@ -228,8 +228,8 @@ export interface DeleteKeyResponse {
  * Parameters for the createCustomer API endpoint.
  */
 export interface CreateCustomerParams {
-  name: string;     // Required: Customer name
-  email: string;    // Required: Customer email
+  name: string;     // Required: Customer name (3-255 characters)
+  email?: string;   // Optional: Customer email
 }
 
 /**
@@ -478,7 +478,7 @@ export interface UpdateKeyParams {
   productId: string;          // Required: The unique identifier of the product.
   licenseKey: string;         // Required: The license key to update.
   maxActivations?: string | number;  // Optional: New max activations count
-  expiryDate?: string;        // Optional: New expiration date in ISO 8601 format
+  expiryDate?: string | null; // Optional: New expiration date in ISO 8601 format. `null` (or `""`) removes the expiry; omit it to keep the current one.
   customerId?: string;        // Optional: New customer ID to associate
   newCustomer?: NewCustomer;  // Optional: Create and associate a new customer
   metadata?: Record<string, any>; // Optional: Updated custom metadata
