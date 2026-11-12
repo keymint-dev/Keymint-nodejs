@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import { createHash, randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { homedir } from 'os';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { 
@@ -25,6 +25,53 @@ import { verifyOfflineLicense, OfflineVerifyOptions, OfflineLicense } from './of
 export * from './types';
 export { verifyOfflineLicense, OfflineLicenseError } from './offline';
 export type { OfflineVerifyOptions, OfflineLicense, OfflineLicenseErrorCode } from './offline';
+
+/** Options for {@link KeyMint.getOrCreateInstallationId}. */
+export interface InstallationIdOptions {
+  /**
+   * Throw {@link InstallationIdError} instead of returning an unsaved ID when
+   * the ID cannot be saved and read back. Default `false`. Recommended for
+   * desktop apps that activate devices.
+   */
+  requirePersisted?: boolean;
+}
+
+/**
+ * Thrown by {@link KeyMint.getOrCreateInstallationId} with
+ * `requirePersisted: true` when the installation ID cannot be saved to,
+ * or read back from, `path`.
+ */
+export class InstallationIdError extends Error {
+  /** The storage path that could not be used. */
+  readonly path: string;
+  /** The underlying file system error, if any. */
+  readonly cause?: unknown;
+
+  constructor(message: string, path: string, cause?: unknown) {
+    super(message);
+    this.name = 'InstallationIdError';
+    this.path = path;
+    this.cause = cause;
+    Object.setPrototypeOf(this, InstallationIdError.prototype);
+  }
+}
+
+let unsavedInstallationIdWarned = false;
+
+function warnUnsavedInstallationId(filePath: string): void {
+  if (unsavedInstallationIdWarned) return;
+  unsavedInstallationIdWarned = true;
+  process.emitWarning(
+    `Keymint could not save the installation ID to ${filePath}. An unsaved ID was returned, ` +
+      'so the next launch will get a different ID and use another activation slot. ' +
+      'Pass a writable storagePath, or { requirePersisted: true } to throw instead.',
+    { type: 'KeymintInstallationIdWarning', code: 'KEYMINT_INSTALLATION_ID_NOT_SAVED' },
+  );
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
 
 export class KeyMint {
 
@@ -74,22 +121,55 @@ export class KeyMint {
    * This is the **recommended** value to pass as `hostId` when activating
    * a license key.
    *
-   * If the file cannot be written (e.g. a read-only filesystem such as
-   * Vercel or Lambda), the write error is swallowed and the freshly generated
-   * ID is returned without being saved, so the next call returns a different
-   * ID. Pass a writable `storagePath` in those environments.
+   * If the ID cannot be saved (read-only disk, sandbox, permissions), the
+   * default is to return the generated ID anyway and emit one
+   * `KeymintInstallationIdWarning` per process via `process.emitWarning`.
+   * That ID is not saved, so the next launch gets a different one and uses
+   * another activation slot. Desktop apps that activate devices should pass
+   * `{ requirePersisted: true }`, which throws {@link InstallationIdError}
+   * instead. In serverless environments (Vercel, Lambda), pass a writable
+   * `storagePath`.
    *
    * @param storagePath - Optional custom path for the persistence file.
    *   Defaults to `~/.keymint/installation-id`.
+   * @param options - `requirePersisted` (default `false`): throw
+   *   {@link InstallationIdError} when the ID cannot be saved and read back,
+   *   or an existing file cannot be read.
    * @returns A SHA-256 hashed 64-character hex string.
-   * @throws If an existing file cannot be read (e.g. a permissions error).
+   * @throws {InstallationIdError} Only with `requirePersisted: true`.
+   * @throws If an existing file cannot be read (default mode).
    */
-  static getOrCreateInstallationId(storagePath?: string): string {
-    const filePath = storagePath || join(homedir(), '.keymint', 'installation-id');
+  static getOrCreateInstallationId(storagePath?: string, options?: InstallationIdOptions): string;
+  /**
+   * Same as above, with `storagePath` and `requirePersisted` in one options object.
+   * Example: `KeyMint.getOrCreateInstallationId({ requirePersisted: true })`.
+   */
+  static getOrCreateInstallationId(options: InstallationIdOptions & { storagePath?: string }): string;
+  static getOrCreateInstallationId(
+    storagePathOrOptions?: string | (InstallationIdOptions & { storagePath?: string }),
+    options?: InstallationIdOptions,
+  ): string {
+    const opts = typeof storagePathOrOptions === 'object' && storagePathOrOptions !== null
+      ? storagePathOrOptions
+      : { ...options, storagePath: storagePathOrOptions };
+    const requirePersisted = opts.requirePersisted === true;
+    const filePath = opts.storagePath || join(homedir(), '.keymint', 'installation-id');
 
     // 1. If the file exists, trust it and return its contents
     if (existsSync(filePath)) {
-      const stored = readFileSync(filePath, 'utf8').trim();
+      let stored: string;
+      try {
+        stored = readFileSync(filePath, 'utf8').trim();
+      } catch (err) {
+        if (requirePersisted) {
+          throw new InstallationIdError(
+            `Could not read the Keymint installation ID from ${filePath}: ${errorMessage(err)}`,
+            filePath,
+            err,
+          );
+        }
+        throw err;
+      }
       if (stored.length > 0) {
         return createHash('sha256').update(stored).digest('hex');
       }
@@ -100,15 +180,25 @@ export class KeyMint {
     const uuid = randomUUID();
     const compositeId = `${uuid}:${hardwareAnchor}:${Date.now()}`;
 
-    // 3. Persist it (with fallback for read-only filesystems like Vercel/Lambda)
+    // 3. Persist it and read it back
     try {
-      const dir = filePath.substring(0, filePath.lastIndexOf('/'));
+      const dir = dirname(filePath);
       if (dir && !existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }
       writeFileSync(filePath, compositeId, 'utf8');
+      if (readFileSync(filePath, 'utf8').trim() !== compositeId) {
+        throw new Error('the saved value did not match when read back');
+      }
     } catch (err) {
-      // Silently swallow error and fall back to returning the generated ID in-memory
+      if (requirePersisted) {
+        throw new InstallationIdError(
+          `Could not save the Keymint installation ID to ${filePath}: ${errorMessage(err)}`,
+          filePath,
+          err,
+        );
+      }
+      warnUnsavedInstallationId(filePath);
     }
 
     return createHash('sha256').update(compositeId).digest('hex');

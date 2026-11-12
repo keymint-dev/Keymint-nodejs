@@ -49,6 +49,25 @@ Keymint provides utilities to uniquely identify machines for node-locking:
 - `KeyMint.getOrCreateInstallationId()`: **Recommended.** Generates a stable UUID anchored to hardware and persists it to `~/.keymint/installation-id`.
 - `KeyMint.getMachineId()`: Generates a SHA-256 fingerprint based on BIOS UUID, OS machine ID, and MAC address.
 
+### When the installation ID can't be saved
+
+If `getOrCreateInstallationId()` can't save the ID (read-only disk, sandbox, permissions), by default it still returns an ID and emits one `KeymintInstallationIdWarning` per process through `process.emitWarning` (code `KEYMINT_INSTALLATION_ID_NOT_SAVED`). That ID isn't saved, so the next launch gets a different one and the same machine uses another activation slot.
+
+Desktop apps that activate devices should pass `requirePersisted: true`. It throws `InstallationIdError` (with the storage path in `err.path`) when the ID can't be saved and read back, or an existing ID file can't be read:
+
+```typescript
+import { KeyMint, InstallationIdError } from 'keymint';
+
+try {
+  const hostId = KeyMint.getOrCreateInstallationId({ requirePersisted: true });
+} catch (err) {
+  if (!(err instanceof InstallationIdError)) throw err;
+  // tell the user the app can't write to err.path, or pass a writable storagePath
+}
+```
+
+Both call forms work: `getOrCreateInstallationId(storagePath, { requirePersisted: true })` and `getOrCreateInstallationId({ storagePath, requirePersisted: true })`. In serverless environments (Vercel, Lambda), pass a writable `storagePath` such as `/tmp/keymint-installation-id`.
+
 ## API Methods
 
 ### License Key Management
