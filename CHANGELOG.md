@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `getOrCreateInstallationId` accepts `{ requirePersisted: true }`, either as a second argument after `storagePath` or as a single options object with `storagePath`. It throws the new `InstallationIdError` (with `path`) when the ID can't be saved and read back, or an existing file can't be read. Recommended for desktop apps that activate devices. The default is `false` and the return type is unchanged.
+
+### Fixed
+
+- `getOrCreateInstallationId` no longer fails silently when it can't save the ID. By default it still returns an unsaved ID, and now emits one `KeymintInstallationIdWarning` per process (`process.emitWarning`, code `KEYMINT_INSTALLATION_ID_NOT_SAVED`), because the next launch will get a different ID and use another activation slot.
+- The storage directory is found with `path.dirname`, so Windows paths with backslashes are created correctly.
+
 ## 1.8.0 - 2026-11-11
 
 ### Added
